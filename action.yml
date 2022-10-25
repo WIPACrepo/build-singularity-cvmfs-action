@@ -9,13 +9,13 @@ inputs:
     description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
     required: true
     default: ''
-  remove_image:
+  remove:
     description: 'whether to request to remove the images(s); use `${{ github.event_name == 'delete' }}`'
     required: true
-    type: boolean
+    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
     default: 'false'
-  image_tags:
-    description: 'the list of image tags (taring) requested to be built on CVMFS; use `${{ needs.docker.outputs.tags }}`'
+  docker_tags:
+    description: 'the list of Docker image tags requested to be built on CVMFS; use `${{ needs.docker.outputs.tags }}`'
     required: true
     type: string
     default: ''
@@ -29,9 +29,64 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - run: pip install --upgrade pip
+
+    - name: Checkout WIPACrepo/cvmfs-actions
+        uses: actions/checkout@v3
+        with:
+          repository: WIPACrepo/cvmfs-actions
+          path: cvmfs-actions
+          token: ${{ inputs.github_token }}  # so job can git push
+
+    - name: Git config
+      run: |
+        cd cvmfs-actions
+        git config user.name github-actions
+        git config user.email github-actions@github.com
       shell: bash
-    - run: pip install flake8
+
+    - name: Request to Add Image to CVMFS
+      if: ${{ inputs.remove == 'false' }}
+      run: |
+        for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
+          echo $TAG
+          # TAG  = "icecube/skymap_scanner:3"
+          # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
+          LINE="docker://$TAG $( sed 's/icecube/realtime/g' <<< $TAG )"
+          echo $LINE
+          # remove all instances of the line
+          sed '/$LINE/d' ./docker_images.txt
+          sed '/-$LINE/d' ./docker_images.txt
+          # and append it to the end
+          echo $LINE >> docker_images.txt
+          # add & commit
+          git add docker_images.txt || true
+          git commit -m "<bot> update docker_images.txt ($LINE)" || true
+        done
       shell: bash
-    - run: flake8 . --ignore=E203,E226,E228,E231,E501,W503,W504 --benchmark
+
+    - name: Request to Remove Image from CVMFS
+      if: ${{ inputs.remove == 'true' }}
+      run: |
+        for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
+          echo $TAG
+          # TAG  = "icecube/skymap_scanner:3"
+          # LINE = "- docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
+          LINE_NO_DASH="docker://$TAG $( sed 's/icecube/realtime/g' <<< $TAG )"
+          LINE="- $LINE_NO_DASH"
+          echo $LINE
+          # remove all instances of the line
+          sed '/$LINE/d' ./docker_images.txt
+          sed '/$LINE_NO_DASH/d' ./docker_images.txt
+          # and append it to the end
+          echo $LINE >> docker_images.txt
+          # add & commit
+          git add docker_images.txt || true
+          git commit -m "<bot> update docker_images.txt ($LINE)" || true
+        done
+
+    - name: Git Push
+      run: |
+        git push
       shell: bash
+
+
