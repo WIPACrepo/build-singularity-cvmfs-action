@@ -39,13 +39,13 @@ runs:
 
     - name: Git config
       run: |
-        cd cvmfs-actions
         git config user.name github-actions
         git config user.email github-actions@github.com
       shell: bash
 
     - name: Request to Add Image to CVMFS
       if: ${{ inputs.remove == 'false' }}
+      working-directory: cvmfs-actions
       run: |
         for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
           echo $TAG
@@ -66,6 +66,7 @@ runs:
 
     - name: Request to Remove Image from CVMFS
       if: ${{ inputs.remove == 'true' }}
+      working-directory: cvmfs-actions
       run: |
         for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
           echo $TAG
