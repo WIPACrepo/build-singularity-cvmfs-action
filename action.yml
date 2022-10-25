@@ -1,0 +1,37 @@
+name: 'build-singularity-cvmfs-action'
+description: 'GitHub Action Package for Requesting Singularity Builds on CVMFS'
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'
+
+inputs:
+  github_token:
+    description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
+    required: true
+    default: ''
+  remove_image:
+    description: 'whether to request to remove the images(s); use `${{ github.event_name == 'delete' }}`'
+    required: true
+    type: boolean
+    default: 'false'
+  image_tags:
+    description: 'the list of image tags (taring) requested to be built on CVMFS; use `${{ needs.docker.outputs.tags }}`'
+    required: true
+    type: string
+    default: ''
+
+
+# outputs:
+#   random-number:
+#     description: "Random number"
+#     value: ${{ steps.random-number-generator.outputs.random-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - run: pip install --upgrade pip
+      shell: bash
+    - run: pip install flake8
+      shell: bash
+    - run: flake8 . --ignore=E203,E226,E228,E231,E501,W503,W504 --benchmark
+      shell: bash
