@@ -23,8 +23,11 @@ inputs:
     description: 'the CVMFS directory to place the image(s)'
     required: true
     default: ''
-
-
+  remove_docker_repo:
+    description: 'whether to remove the docker image's repo when inserting into CVMFS dir; e.g. icecube/skymap_scanner:3 -> DEST_DIR/skymap_scanner:3 OR DEST_DIR/icecube/skymap_scanner:3'
+    required: true
+    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
+    default: 'false'
 
 # outputs:
 #   random-number:
@@ -52,12 +55,22 @@ runs:
 
     - name: Request to Update Image(s) on CVMFS
       run: |
+        # figure ACTION (--action)
         if ${{ inputs.remove == 'false' }}; then
           ACTION=add
         elif ${{ inputs.remove == 'true' }}; then
           ACTION=remove
         else
-          echo "ERROR: Unsupported action: ${{ inputs.remove }}"
+          echo "ERROR: Unsupported input: 'remove' (${{ inputs.remove }})"
+        fi
+
+        # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
+        if ${{ inputs.remove_docker_repo == 'false' }}; then
+          REMOVE_DOCKER_REPO=''
+        elif ${{ inputs.remove_docker_repo == 'true' }}; then
+          REMOVE_DOCKER_REPO='--remove-docker-repo'
+        else
+          echo "ERROR: Unsupported input: 'remove_docker_repo' (${{ inputs.remove_docker_repo }})"
         fi
 
         for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
@@ -66,7 +79,7 @@ runs:
               --action $ACTION \
               --docker-tag $TAG \
               --dest-dir ${{ inputs.dest_dir }} \
-              --remove-docker-repo
+              $REMOVE_DOCKER_REPO
           # add & commit
           git add docker_images.txt || true
           git commit -m "<bot> update docker_images.txt ($TAG) [$ACTION]" || true
