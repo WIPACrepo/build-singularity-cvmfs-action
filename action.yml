@@ -59,6 +59,7 @@ runs:
           ACTION=remove
         else
           echo "ERROR: Unsupported input: 'remove' (${{ inputs.remove }})"
+          exit 1
         fi
 
         # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
@@ -68,6 +69,7 @@ runs:
           REMOVE_DOCKER_REPO='--remove-docker-repo'
         else
           echo "ERROR: Unsupported input: 'include_docker_repo' (${{ inputs.include_docker_repo }})"
+          exit 1
         fi
 
         for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
