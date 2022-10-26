@@ -28,7 +28,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--dest-dir",
-        required=True,
+        default="",
         help="The destination directory, eg: realtime",
     )
     parser.add_argument(
