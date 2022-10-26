@@ -2,7 +2,7 @@
 GitHub Action Package for Requesting Singularity Builds on CVMFS
 
 ### Overview
-A CI workflow can request adding or removing Docker builds on CVMFS at a specified directory/sub-directory.
+A CI workflow can request adding or removing Docker-based Singularity builds on CVMFS at a specified directory/sub-directory.
 
 ### Examples
 
@@ -13,7 +13,7 @@ These inputs are required.
 build-singularity-cvmfs-action@v##
   with:
     github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # so job can git push
-    docker_tags: YOUR_DOCKER_TAGS
+    docker_tags: ${{ needs.docker.outputs.tags }}  # or similar
 ```
 
 #### Full Example
