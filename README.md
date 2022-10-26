@@ -20,6 +20,6 @@ build-singularity-cvmfs-action@v##
 See Skymap Scanner's [publish.yml](https://github.com/icecube/skymap_scanner/blob/master/.github/workflows/publish.yml)
 
 ## Under The Hood
-This action adds one or more lines to the end of `WIPACrepo/cvmfs-actions/docker_tags.txt`, and the changes are pushed using the `github-actions` user (bot). This triggers Singularity-image building and hosting on CVMFS. Optionally, a `-` prefix is attached to lines when images are requested to be removed.
+This action adds one or more lines to the end of [WIPACrepo/cvmfs-actions/docker_tags.txt](https://github.com/WIPACrepo/cvmfs-actions), and the changes are pushed using the `github-actions` user (bot). This triggers Singularity-image building and hosting on CVMFS. Optionally, a `-` prefix is attached to lines when images are requested to be removed.
 
 For example, a line may look like, `docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3` for the image tag, `icecube/skymap_scanner:3` (See [full example](#full-example)). All previous occurrences of this line are removed from the `.txt` file (including those with and without the `-` (remove) prefix). This process repeats for each image tag.
