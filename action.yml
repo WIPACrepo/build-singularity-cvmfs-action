@@ -25,7 +25,6 @@ inputs:
     default: ''
   remove_docker_repo:
     description: 'whether to remove the docker image's repo when inserting into CVMFS dir; e.g. icecube/skymap_scanner:3 -> DEST_DIR/skymap_scanner:3 OR DEST_DIR/icecube/skymap_scanner:3'
-    required: true
     type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
     default: 'false'
 
