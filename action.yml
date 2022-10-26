@@ -39,10 +39,10 @@ runs:
         python-version: '3.10'  # NOTE: update, someday
 
     - name: Checkout WIPACrepo/cvmfs-actions
-        uses: actions/checkout@v3
-        with:
-          repository: WIPACrepo/cvmfs-actions
-          token: ${{ inputs.github_token }}  # so job can git push
+      uses: actions/checkout@v3
+      with:
+        repository: WIPACrepo/cvmfs-actions
+        token: ${{ inputs.github_token }}  # so job can git push
 
     - name: Git config
       run: |
