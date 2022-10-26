@@ -48,7 +48,7 @@ def main() -> None:
     # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
 
     if args.remove_docker_repo:
-        dest_file = args.docker_tag.split("/", max_split=1)[1]
+        dest_file = args.docker_tag.split("/", maxsplit=1)[1]
     else:
         dest_file = args.docker_tag
 
