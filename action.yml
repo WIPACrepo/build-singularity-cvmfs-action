@@ -1,0 +1,97 @@
+name: 'build-singularity-cvmfs-action'
+description: 'GitHub Action Package for Requesting Singularity Builds on CVMFS'
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'
+
+inputs:
+  github_token:
+    description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
+    required: true
+    default: ''
+  remove:
+    description: 'whether to request to remove the images(s); use `${{ github.event_name == 'delete' }}`'
+    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
+    default: 'false'
+  docker_tags:
+    description: 'the list of Docker image tags requested to be built on CVMFS; use `${{ needs.docker.outputs.tags }}`'
+    required: true
+    type: string
+    default: ''
+  dest_dir:
+    description: 'the CVMFS sub-directory to place the image(s)'
+    default: ''
+  remove_docker_repo:
+    description: 'whether to remove the docker image's repo when inserting into CVMFS dir; e.g. icecube/skymap_scanner:3 -> DEST_DIR/skymap_scanner:3 OR DEST_DIR/icecube/skymap_scanner:3'
+    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
+    default: 'false'
+
+# outputs:
+#   random-number:
+#     description: "Random number"
+#     value: ${{ steps.random-number-generator.outputs.random-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'  # NOTE: update, someday
+
+    - name: Checkout WIPACrepo/cvmfs-actions
+        uses: actions/checkout@v3
+        with:
+          repository: WIPACrepo/cvmfs-actions
+          token: ${{ inputs.github_token }}  # so job can git push
+
+    - name: Git config
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+      shell: bash
+
+    - name: Request to Update Image(s) on CVMFS
+      run: |
+        # figure ACTION (--action)
+        if ${{ inputs.remove == 'false' }}; then
+          ACTION=add
+        elif ${{ inputs.remove == 'true' }}; then
+          ACTION=remove
+        else
+          echo "ERROR: Unsupported input: 'remove' (${{ inputs.remove }})"
+        fi
+
+        # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
+        if ${{ inputs.remove_docker_repo == 'false' }}; then
+          REMOVE_DOCKER_REPO=''
+        elif ${{ inputs.remove_docker_repo == 'true' }}; then
+          REMOVE_DOCKER_REPO='--remove-docker-repo'
+        else
+          echo "ERROR: Unsupported input: 'remove_docker_repo' (${{ inputs.remove_docker_repo }})"
+        fi
+
+        for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
+          echo $TAG
+          python3 ${{ github.action_path }}/update_docker_images_txt.py \
+              --action $ACTION \
+              --docker-tag $TAG \
+              --dest-dir ${{ inputs.dest_dir }} \
+              $REMOVE_DOCKER_REPO
+          # add & commit
+          git add docker_images.txt || true
+          git commit -m "<bot> update docker_images.txt ($TAG) [$ACTION]" || true
+        done
+      shell: bash
+
+    - name: Push changes
+      run: |
+        status=`git status 2>&1 | tee`
+        ahead=`echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
+        if [ "$ahead" -eq "1" ]; then
+          echo "no changes needed"
+          exit 0
+        fi
+        git push
+      shell: bash
+
+
