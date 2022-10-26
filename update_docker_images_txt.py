@@ -13,7 +13,7 @@ def main() -> None:
     Make scratch directory and condor file.
     """
     parser = argparse.ArgumentParser(
-        description=("Update the ./docker_images.txt"),
+        description=(f"Update {DOCKER_IMAGES_FILE}"),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
