@@ -4,6 +4,8 @@ import argparse
 import logging
 import os
 
+DOCKER_IMAGES_FILE = "./docker_images.txt"
+
 
 def main() -> None:
     """Prep and execute Condor job.
@@ -56,7 +58,7 @@ def main() -> None:
     negated = f"- {cvmfs_image_str}"
 
     # read
-    with open("./docker_images.txt", "r") as f:
+    with open(DOCKER_IMAGES_FILE, "r") as f:
         lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
         # remove all instances of the line
         lines = [ln for ln in lines if ln not in [cvmfs_image_str, negated]]
@@ -75,10 +77,10 @@ def main() -> None:
             )
         case unknown:
             raise RuntimeError(f"Unsupported --action: {unknown}")
-    logging.debug(f"Added line to docker_images.txt: {lines[-1]}")
+    logging.debug(f"Added line to {DOCKER_IMAGES_FILE}: {lines[-1]}")
 
     # write
-    with open("./docker_images.txt", "w") as f:
+    with open(DOCKER_IMAGES_FILE, "w") as f:
         f.write("\n".join(lines))
 
 
