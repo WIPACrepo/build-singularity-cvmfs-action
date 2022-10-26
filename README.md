@@ -11,8 +11,8 @@ These inputs are required.
 ```
 - uses: WIPACrepo/cvmfs-actions@v##
   with:
-  github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # so job can git push
-  docker_tags: YOUR_DOCKER_TAGS
+    github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # so job can git push
+    docker_tags: YOUR_DOCKER_TAGS
 ```
 
 #### Full Example
