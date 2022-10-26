@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 
 
 def main() -> None:
@@ -49,7 +50,7 @@ def main() -> None:
     else:
         dest_file = args.docker_tag
 
-    line_to_add = f"docker://{args.docker_tag} {args.dest_dir}/{dest_file}"
+    line_to_add = f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
 
     def negated() -> str:
         return f"- {line_to_add}"
