@@ -9,8 +9,7 @@ A CI workflow can request to add or remove Docker-based Singularity builds on CV
 ### Minimal Example
 These inputs are required.
 ```
-- uses: WIPACrepo/
-build-singularity-cvmfs-action@v##
+- uses: WIPACrepo/build-singularity-cvmfs-action@v##
   with:
     github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # so job can git push
     docker_tags: ${{ needs.docker.outputs.tags }}  # or similar
