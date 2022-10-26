@@ -53,9 +53,9 @@ runs:
     - name: Request to Update Image(s) on CVMFS
       run: |
         # figure ACTION (--action)
-        if ${{ inputs.remove == 'false' }}; then
+        if [ "${{ inputs.remove }}" -eq "false" ]; then
           ACTION=add
-        elif ${{ inputs.remove == 'true' }}; then
+        elif [ "${{ inputs.remove }}" -eq "true" ]; then
           ACTION=remove
         else
           echo "ERROR: Unsupported input: 'remove' (${{ inputs.remove }})"
@@ -63,9 +63,9 @@ runs:
         fi
 
         # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
-        if ${{ inputs.include_docker_repo == 'true' }}; then
+        if [ "${{ inputs.include_docker_repo }}" -eq "true" ]; then
           REMOVE_DOCKER_REPO=''
-        elif ${{ inputs.include_docker_repo == 'false' }}; then
+        elif [ "${{ inputs.include_docker_repo }}" -eq "false" ]; then
           REMOVE_DOCKER_REPO='--remove-docker-repo'
         else
           echo "ERROR: Unsupported input: 'include_docker_repo' (${{ inputs.include_docker_repo }})"
