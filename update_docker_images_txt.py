@@ -65,12 +65,17 @@ def main() -> None:
     match args.action:
         case "add":
             lines.append(cvmfs_image_str)
-            logging.info(f"Append: {cvmfs_image_str}")
+            logging.info(
+                f"Requesting Image Build: {cvmfs_image_str.split()[0]} at {cvmfs_image_str.split()[1]}"
+            )
         case "remove":
             lines.append(negated)
-            logging.info(f"Append: {negated}")
+            logging.info(
+                f"Requesting Image Removal: {cvmfs_image_str.split()[0]} at {cvmfs_image_str.split()[1]}"
+            )
         case unknown:
             raise RuntimeError(f"Unsupported --action: {unknown}")
+    logging.debug(f"Added line to docker_images.txt: {lines[-1]}")
 
     # write
     with open("./docker_images.txt", "w") as f:
@@ -78,4 +83,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.getLogger().setLevel("DEBUG")
     main()
