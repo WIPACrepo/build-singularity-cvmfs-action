@@ -50,22 +50,22 @@ def main() -> None:
     else:
         dest_file = args.docker_tag
 
-    line_to_add = f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
-
-    def negated() -> str:
-        return f"- {line_to_add}"
+    cvmfs_image_str = (
+        f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
+    )
+    negated = f"- {cvmfs_image_str}"
 
     with open("./docker_images.txt", "w") as f:
         lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
         # remove all instances of the line
-        lines = [ln for ln in lines if ln not in [line_to_add, negated()]]
+        lines = [ln for ln in lines if ln not in [cvmfs_image_str, negated]]
         match args.action:
             case "add":
-                lines.append(line_to_add)
-                logging.info(f"Appended: {line_to_add}")
+                lines.append(cvmfs_image_str)
+                logging.info(f"Appended: {cvmfs_image_str}")
             case "remove":
-                lines.append(negated())
-                logging.info(f"Appended: {negated()}")
+                lines.append(negated)
+                logging.info(f"Appended: {negated}")
             case unknown:
                 raise RuntimeError(f"Unsupported --action: {unknown}")
         f.write("\n".join(lines))
