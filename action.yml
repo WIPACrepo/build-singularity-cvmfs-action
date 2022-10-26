@@ -10,7 +10,7 @@ inputs:
     required: true
     default: ''
   remove:
-    description: 'whether to request to remove the images(s); use `${{ github.event_name == 'delete' }}`'
+    description: 'whether to request to remove the images(s)'  # use `${{ github.event_name == 'delete' }}`
     type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
     default: 'false'
   docker_tags:
