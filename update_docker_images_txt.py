@@ -55,19 +55,25 @@ def main() -> None:
     )
     negated = f"- {cvmfs_image_str}"
 
-    with open("./docker_images.txt", "w") as f:
+    # read
+    with open("./docker_images.txt", "r") as f:
         lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
         # remove all instances of the line
         lines = [ln for ln in lines if ln not in [cvmfs_image_str, negated]]
-        match args.action:
-            case "add":
-                lines.append(cvmfs_image_str)
-                logging.info(f"Appended: {cvmfs_image_str}")
-            case "remove":
-                lines.append(negated)
-                logging.info(f"Appended: {negated}")
-            case unknown:
-                raise RuntimeError(f"Unsupported --action: {unknown}")
+
+    # append
+    match args.action:
+        case "add":
+            lines.append(cvmfs_image_str)
+            logging.info(f"Append: {cvmfs_image_str}")
+        case "remove":
+            lines.append(negated)
+            logging.info(f"Append: {negated}")
+        case unknown:
+            raise RuntimeError(f"Unsupported --action: {unknown}")
+
+    # write
+    with open("./docker_images.txt", "w") as f:
         f.write("\n".join(lines))
 
 
