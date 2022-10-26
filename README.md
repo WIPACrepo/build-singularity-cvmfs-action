@@ -2,7 +2,7 @@
 GitHub Action Package for Requesting Singularity Builds on CVMFS
 
 ### Overview
-A CI workflow can request adding or removing Docker-based Singularity builds on CVMFS at a specified directory/sub-directory.
+A CI workflow can request to add or remove Docker-based Singularity builds on CVMFS at a specified directory/sub-directory.
 
 ### Examples
 
@@ -20,4 +20,6 @@ build-singularity-cvmfs-action@v##
 See Skymap Scanner's [publish.yml](https://github.com/icecube/skymap_scanner/blob/master/.github/workflows/publish.yml)
 
 ### Under The Hood
-This action adds one or more lines to the end of `WIPACrepo/cvmfs-actions/docker_tags.txt`, which triggers image building. For example, a line may look like, `docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3` for the tag, `icecube/skymap_scanner:3` (See [full example](#full-example)).
+This action adds one or more lines to the end of `WIPACrepo/cvmfs-actions/docker_tags.txt`, which triggers Singularity-image building and hosting. Optionally, a `-` prefix is attached to lines when images are requested to be removed.
+
+For example, a line may look like, `docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3` for the tag, `icecube/skymap_scanner:3` (See [full example](#full-example)). All previous occurrences of this line are removed from the `.txt` file (including those with and without the `-` (remove) prefix).
