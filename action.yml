@@ -68,8 +68,14 @@ runs:
         done
       shell: bash
 
-    - name: Git Push
+    - name: Push changes
       run: |
+        status=`git status 2>&1 | tee`
+        ahead=`echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
+        if [ "$ahead" -eq "1" ]; then
+          echo "no changes needed"
+          exit 0
+        fi
         git push
       shell: bash
 
