@@ -19,6 +19,11 @@ inputs:
     required: true
     type: string
     default: ''
+  dest_dir:
+    description: 'the CVMFS directory to place the image(s)'
+    required: true
+    default: ''
+
 
 
 # outputs:
@@ -60,7 +65,7 @@ runs:
           python3 ${{ github.action_path }}/update_docker_images_txt.py \
               --action $ACTION \
               --docker-tag $TAG \
-              --dest-dir realtime \
+              --dest-dir ${{ inputs.dest_dir }} \
               --remove-docker-repo
           # add & commit
           git add docker_images.txt || true
