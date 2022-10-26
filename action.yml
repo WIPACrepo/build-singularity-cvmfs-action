@@ -29,12 +29,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'  # NOTE: update, someday
 
     - name: Checkout WIPACrepo/cvmfs-actions
         uses: actions/checkout@v3
         with:
           repository: WIPACrepo/cvmfs-actions
-          path: cvmfs-actions
           token: ${{ inputs.github_token }}  # so job can git push
 
     - name: Git config
@@ -43,47 +45,28 @@ runs:
         git config user.email github-actions@github.com
       shell: bash
 
-    - name: Request to Add Image to CVMFS
-      if: ${{ inputs.remove == 'false' }}
-      working-directory: cvmfs-actions
+    - name: Request to Update Image(s) on CVMFS
       run: |
+        if ${{ inputs.remove == 'false' }}; then
+          ACTION=add
+        elif ${{ inputs.remove == 'true' }}; then
+          ACTION=remove
+        else
+          echo "ERROR: Unsupported action: ${{ inputs.remove }}"
+        fi
+
         for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
           echo $TAG
-          # TAG  = "icecube/skymap_scanner:3"
-          # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
-          LINE="docker://$TAG $( sed 's/icecube/realtime/g' <<< $TAG )"
-          echo $LINE
-          # remove all instances of the line
-          sed '/$LINE/d' ./docker_images.txt
-          sed '/-$LINE/d' ./docker_images.txt
-          # and append it to the end
-          echo $LINE >> docker_images.txt
+          python3 ${{ github.action_path }}/update_docker_images_txt.py \
+              --action $ACTION \
+              --docker-tag $TAG \
+              --dest-dir realtime \
+              --remove-docker-repo
           # add & commit
           git add docker_images.txt || true
-          git commit -m "<bot> update docker_images.txt ($LINE)" || true
+          git commit -m "<bot> update docker_images.txt ($TAG) [$ACTION]" || true
         done
       shell: bash
-
-    - name: Request to Remove Image from CVMFS
-      if: ${{ inputs.remove == 'true' }}
-      working-directory: cvmfs-actions
-      run: |
-        for TAG in ${{ fromJSON(inputs.docker_tags) }}; do
-          echo $TAG
-          # TAG  = "icecube/skymap_scanner:3"
-          # LINE = "- docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
-          LINE_NO_DASH="docker://$TAG $( sed 's/icecube/realtime/g' <<< $TAG )"
-          LINE="- $LINE_NO_DASH"
-          echo $LINE
-          # remove all instances of the line
-          sed '/$LINE/d' ./docker_images.txt
-          sed '/$LINE_NO_DASH/d' ./docker_images.txt
-          # and append it to the end
-          echo $LINE >> docker_images.txt
-          # add & commit
-          git add docker_images.txt || true
-          git commit -m "<bot> update docker_images.txt ($LINE)" || true
-        done
 
     - name: Git Push
       run: |
