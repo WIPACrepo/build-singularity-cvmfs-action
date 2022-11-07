@@ -23,6 +23,12 @@ def main() -> None:
         default="",
         help="The destination directory, eg: realtime",
     )
+    parser.add_argument(
+        "--remove-docker-repo",
+        default=False,
+        action="store_true",
+        help="whether to remove the docker image's repo when inserting to CVMFS dir",
+    )
 
     args = parser.parse_args()
     for arg, val in vars(args).items():
