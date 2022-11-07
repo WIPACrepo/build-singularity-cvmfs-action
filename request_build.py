@@ -1,4 +1,4 @@
-"""Update ./docker_images.txt."""
+"""Update ./docker_images.txt with a build request."""
 
 import argparse
 import logging
@@ -8,20 +8,10 @@ DOCKER_IMAGES_FILE = "./docker_images.txt"
 
 
 def main() -> None:
-    """Prep and execute Condor job.
-
-    Make scratch directory and condor file.
-    """
+    """Main."""
     parser = argparse.ArgumentParser(
         description=(f"Update {DOCKER_IMAGES_FILE}"),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    parser.add_argument(
-        "--action",
-        required=True,
-        choices=["add", "remove"],
-        help="What do you want to do with the docker images?",
     )
     parser.add_argument(
         "--docker-tag",
@@ -32,12 +22,6 @@ def main() -> None:
         "--dest-dir",
         default="",
         help="The destination directory, eg: realtime",
-    )
-    parser.add_argument(
-        "--remove-docker-repo",
-        default=False,
-        action="store_true",
-        help="whether to remove the docker image's repo when inserting to CVMFS dir",
     )
 
     args = parser.parse_args()
@@ -55,28 +39,17 @@ def main() -> None:
     cvmfs_image_str = (
         f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
     )
-    negated = f"- {cvmfs_image_str}"
 
     # read
     with open(DOCKER_IMAGES_FILE, "r") as f:
         lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
         # remove all instances of the line
-        lines = [ln for ln in lines if ln not in [cvmfs_image_str, negated]]
+        lines = [
+            ln for ln in lines if ln not in [cvmfs_image_str, f"- {cvmfs_image_str}"]
+        ]
 
     # append
-    match args.action:
-        case "add":
-            lines.append(cvmfs_image_str)
-            logging.info(
-                f"Requesting Image Build: {cvmfs_image_str.split()[0]} at {cvmfs_image_str.split()[1]}"
-            )
-        case "remove":
-            lines.append(negated)
-            logging.info(
-                f"Requesting Image Removal: {cvmfs_image_str.split()[0]} at {cvmfs_image_str.split()[1]}"
-            )
-        case unknown:
-            raise RuntimeError(f"Unsupported --action: {unknown}")
+    lines.append(cvmfs_image_str)
     logging.debug(f"Added line to {DOCKER_IMAGES_FILE}: {lines[-1]}")
 
     # write
