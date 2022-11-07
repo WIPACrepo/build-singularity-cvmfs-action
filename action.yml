@@ -35,14 +35,14 @@ runs:
     - name: Check Inputs
       run: |
         # DELETION MODE
-        if [[ -z "${{ inputs.remove_regex_path }}" ]]; then
+        if [[ "${{ inputs.remove_regex_path }}" != '' ]]; then
           # using 'remove_regex_path' -> everything else must be the default value
           if [[ ! (-z "${{ inputs.docker_tags }}" && -z "${{ inputs.dest_dir }}" && "${{ inputs.include_docker_repo }}" == 'true') ]]; then
             echo "Input Error: 'remove_regex_path' is given--no other inputs (other than 'github_token') may be given."
             exit 1
           fi
         # CREATION MODE
-        elif [[ -z "${{ inputs.docker_tags }}" ]]; then
+        elif [[ "${{ inputs.docker_tags }}" == '' ]]; then
           echo "Input Error: 'docker_tags' is empty string"
           exit 1
         fi
