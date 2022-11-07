@@ -45,7 +45,7 @@ def main() -> None:
         lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
         # remove all instances of the line
         lines = [
-            ln for ln in lines if ln not in [cvmfs_image_str, f"- {cvmfs_image_str}"]
+            ln for ln in lines if ln not in [cvmfs_image_str, f"-{cvmfs_image_str}"]
         ]
 
     # append
