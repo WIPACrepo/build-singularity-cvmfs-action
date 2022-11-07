@@ -9,13 +9,11 @@ inputs:
     description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
     required: true
     default: ''
-  remove:
-    description: 'whether to request to remove the images(s)'  # use `${{ github.event_name == 'delete' }}`
-    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
-    default: 'false'
+  remove_regex_path:
+    description: 'DELETION MODE: what dir(s) to rm; e.g. realtime/my-branch.*'  # realtime/${{ github.event.ref }}.*'
+    default: ''
   docker_tags:
     description: 'the list of Docker image tags requested to be built on CVMFS'  # use `${{ needs.docker.outputs.tags }}`
-    required: true
     type: string
     default: ''
   dest_dir:
