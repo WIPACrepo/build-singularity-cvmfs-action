@@ -46,6 +46,7 @@ runs:
           echo "Input Error: 'docker_tags' is empty string"
           exit 1
         fi
+      shell: bash
 
     - uses: actions/setup-python@v4
       with:
@@ -64,7 +65,7 @@ runs:
       shell: bash
 
     - name: Request Build(s) on CVMFS
-      if: inputs.remove_regex_path == ""
+      if: "${{ inputs.remove_regex_path == '' }}"
       run: |
         # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
         if [[ "${{ inputs.include_docker_repo }}" == "true" ]]; then
@@ -89,7 +90,7 @@ runs:
       shell: bash
 
     - name: Request Removal(s) on CVMFS
-      if: inputs.remove_regex_path != ""
+      if: "${{ inputs.remove_regex_path != '' }}"
       run: |
         echo ${{ inputs.remove_regex_path }}
         python3 ${{ github.action_path }}/request_removal.py \
