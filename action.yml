@@ -63,18 +63,9 @@ runs:
         git config user.email github-actions@github.com
       shell: bash
 
-    - name: Request to Update Image(s) on CVMFS
+    - name: Request Build(s) on CVMFS
+      if: inputs.remove_regex_path == ""
       run: |
-        # figure ACTION (--action)
-        if [[ "${{ inputs.remove }}" == "false" ]]; then
-          ACTION=add
-        elif [[ "${{ inputs.remove }}" == "true" ]]; then
-          ACTION=remove
-        else
-          echo "ERROR: Unsupported input: 'remove' (${{ inputs.remove }})"
-          exit 1
-        fi
-
         # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
         if [[ "${{ inputs.include_docker_repo }}" == "true" ]]; then
           REMOVE_DOCKER_REPO=''
@@ -87,15 +78,26 @@ runs:
 
         for TAG in "${{ inputs.docker_tags }}"; do
           echo $TAG
-          python3 ${{ github.action_path }}/update_docker_images_txt.py \
-              --action $ACTION \
+          python3 ${{ github.action_path }}/request_build.py \
               --docker-tag $TAG \
               --dest-dir ${{ inputs.dest_dir }} \
               $REMOVE_DOCKER_REPO
           # add & commit
           git add docker_images.txt || true
-          git commit -m "<bot> update docker_images.txt ($TAG) [$ACTION]" || true
+          git commit -m "<bot> docker_images.txt: request build ($TAG)" || true
         done
+      shell: bash
+
+    - name: Request Removal(s) on CVMFS
+      if: inputs.remove_regex_path != ""
+      run: |
+        echo ${{ inputs.remove_regex_path }}
+        python3 ${{ github.action_path }}/request_removal.py \
+            --remove-regex-path "${{ inputs.remove_regex_path }}"
+
+        # add & commit
+        git add docker_images.txt || true
+        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.remove_regex_path }})" || true
       shell: bash
 
     - name: Push changes
