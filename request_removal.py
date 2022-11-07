@@ -28,15 +28,20 @@ def main() -> None:
 
     # read
     with open(DOCKER_IMAGES_FILE, "r") as f:
-        lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
+        in_lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
 
     matcher = re.compile(rf"^[^-].+ {args.remove_regex_path}$")  # compile once
     # negate any matched lines, keep the rest
-    lines = [f"-{ln}" if matcher.match(ln) else ln for ln in lines]
+    out_lines = [f"-{ln}" if matcher.match(ln) else ln for ln in in_lines]
+
+    # log changed lines
+    for a, b in zip(in_lines, out_lines):
+        if a != b:
+            logging.debug(f"Changed Line: {a} -> {b}")
 
     # write
     with open(DOCKER_IMAGES_FILE, "w") as f:
-        f.write("\n".join(lines))
+        f.write("\n".join(out_lines))
 
 
 if __name__ == "__main__":
