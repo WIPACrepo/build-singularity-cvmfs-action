@@ -1,19 +1,28 @@
-"""Update ./docker_images.txt with image removals based on image tag prefix and dest dir."""
+"""Update ./docker_images.txt with image removals based on image tag pattern and dest dir."""
 
 import argparse
 import logging
+import re
 
 DOCKER_IMAGES_FILE = "./docker_images.txt"
 
+TAG_PATTERN_SHA_SUFFIX = re.compile(
+    r"^(?P<base>.+)-(?P<sha>[a-f0-9]+)$"
+)  # Match `branch-[SHA]`
 
-def _prefix_match(full_prefix: str, line: str) -> bool:
-    does_match = line.split()[-1].startswith(full_prefix)
-    logging.debug(f"Checking '{line=}' against '{full_prefix=}' -> {does_match=}")
-    return does_match
+
+def _matches_pattern(image_pattern: str, image: str) -> bool:
+    # [SHA] suffix
+    if image_pattern.endswith("[SHA]"):
+        match = TAG_PATTERN_SHA_SUFFIX.fullmatch(image)
+        return (match is not None) and (match.group("base") == image_pattern)
+    # Exact match case
+    else:
+        return image == image_pattern
 
 
 def main() -> None:
-    """Main."""
+    """Main function."""
     parser = argparse.ArgumentParser(
         description=(f"Update {DOCKER_IMAGES_FILE}"),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -24,32 +33,37 @@ def main() -> None:
         help="CVMFS destination directory",
     )
     parser.add_argument(
-        "--delete-image-tags-prefix",
+        "--delete-image-tags",
         required=True,
-        help="Image tag prefix to match for removal",
+        help="Image tag to match (e.g., 'branch' for 'branch-[SHA]' or full tag for exact match)",
     )
     args = parser.parse_args()
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
 
-    # read
+    # Read file
     with open(DOCKER_IMAGES_FILE, "r") as f:
-        in_lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
+        in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
-    # Modify lines that start with the given prefix, ex: "realtime/my-branch-"
-    full_prefix = f"{args.dest_dir}/{args.delete_image_tags_prefix}"
-    out_lines = [f"-{ln}" if _prefix_match(full_prefix, ln) else ln for ln in in_lines]
+    # Construct the base pattern
+    image_pattern = f"{args.dest_dir}/{args.delete_image_tags}"
 
-    # log changed lines
+    # Modify lines that match the pattern
+    out_lines = [
+        f"-{ln}" if _matches_pattern(image_pattern, ln.split()[-1]) else ln
+        for ln in in_lines
+    ]
+
+    # Log changed lines
     for a, b in zip(in_lines, out_lines):
         if a != b:
             logging.debug(f"Changed Line: {a} -> {b}")
 
-    # write
+    # Write updated file
     with open(DOCKER_IMAGES_FILE, "w") as f:
-        f.write("\n".join(out_lines))
+        f.write("\n".join(out_lines) + "\n")
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel("DEBUG")
+    logging.getLogger().setLevel(logging.DEBUG)
     main()

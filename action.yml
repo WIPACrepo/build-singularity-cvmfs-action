@@ -1,3 +1,5 @@
+name: CVMFS Image Management
+
 inputs:
   github_token:
     description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
@@ -12,8 +14,8 @@ inputs:
     description: 'whether to include the docker repo when inserting into CVMFS dir'
     type: boolean
     default: 'true'
-  delete_image_tags_prefix:
-    description: 'DELETION MODE: Image tag prefix to match for removal'
+  delete_image_tags:
+    description: 'DELETION MODE: Image tag to match (full tag or prefix for SHA matching)'
     default: ''
 
 runs:
@@ -21,9 +23,9 @@ runs:
   steps:
     - name: Check Inputs
       run: |
-        if [[ -n "${{ inputs.delete_image_tags_prefix }}" ]]; then
+        if [[ -n "${{ inputs.delete_image_tags }}" ]]; then
           if [[ -z "${{ inputs.dest_dir }}" || -n "${{ inputs.docker_tags }}" ]]; then
-            echo "::error::Input Error: 'delete_image_tags_prefix' requires 'dest_dir' and forbids 'docker_tags'."
+            echo "::error::Input Error: 'delete_image_tags' requires 'dest_dir' and forbids 'docker_tags'."
             exit 1
           fi
         elif [[ -z "${{ inputs.docker_tags }}" ]]; then
@@ -49,14 +51,14 @@ runs:
       shell: bash
 
     - name: Request Removal(s) on CVMFS
-      if: ${{ inputs.delete_image_tags_prefix != '' }}
+      if: inputs.delete_image_tags != ''
       run: |
         python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
-            --delete-image-tags-prefix "${{ inputs.delete_image_tags_prefix }}"
+            --delete-image-tags "${{ inputs.delete_image_tags }}"
         
         git add docker_images.txt || true
-        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.delete_image_tags_prefix }})" || true
+        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.delete_image_tags }})" || true
       shell: bash
 
     - name: Push changes
