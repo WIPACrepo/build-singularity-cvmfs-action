@@ -57,7 +57,7 @@ def _get_image(line: str) -> str:
 
 
 def main() -> None:
-    """Main function."""
+    """Main."""
     parser = argparse.ArgumentParser(
         description=(f"Update {DOCKER_IMAGES_FILE}"),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -76,29 +76,27 @@ def main() -> None:
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
 
-    # Read file
+    # read
     with open(DOCKER_IMAGES_FILE, "r") as f:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
-    # Construct the base pattern
-    image_pattern = f"{args.dest_dir}/{args.delete_image_tags}"
-
     # Modify lines that match the pattern
+    image_pattern = f"{args.dest_dir}/{args.delete_image_tags}"
     out_lines = [
         f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
         for ln in in_lines
     ]
 
-    # Log changed lines
+    # log changed lines
     for a, b in zip(in_lines, out_lines):
         if a != b:
             logging.debug(f"Changed Line: {a} -> {b}")
 
-    # Write updated file
+    # write
     with open(DOCKER_IMAGES_FILE, "w") as f:
         f.write("\n".join(out_lines) + "\n")
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel("DEBUG")
     main()
