@@ -10,28 +10,41 @@ SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
 SHA_TOKEN = "[SHA]"
 
 
-def _matches_pattern(image_pattern: str, cvmfs_image: str) -> bool:
+def _matches_pattern(image_pattern: str, image: str) -> bool:
     """Determine if a CVMFS image matches the given pattern w/ known tokens."""
 
     # [SHA] suffix
     if image_pattern.endswith(SHA_TOKEN):
+        logging.debug(f"trying [SHA]-pattern: {image_pattern=} -> {image=}")
         # Example Matches:
         # "feature-branch-[SHA]" -> Matches "feature-branch-abc123"
         # "feature-branch-[SHA]" -> Does NOT match "feature-branch-xyz-abc123"
 
         # w/o SHA_TOKEN suffix (ex: feature-branch-)
         base = image_pattern[: -len(SHA_TOKEN)]
-        if not cvmfs_image.startswith(base):
+        if not image.startswith(base):
+            logging.debug(f"-> no match (does not start with {base=})")
             return False
 
         # the suffix of an actual image (ex: abc123 -> True; xyz-abc123 -> False)
-        potential_sha = cvmfs_image[len(base) :]
-        return bool(SHA_PATTERN.fullmatch(potential_sha))
+        potential_sha = image[len(base) :]
+        if SHA_PATTERN.fullmatch(potential_sha):
+            logging.debug(f"-> matched!")
+            return True
+        else:
+            logging.debug(f"-> no match (does not start with {base=})")
+            return False
 
     # FUTURE DEV: support additional string tokens
     # Exact match case
     else:
-        return cvmfs_image == image_pattern
+        logging.debug(f"trying exact-name match: {image_pattern=} -> {image=}")
+        if image == image_pattern:
+            logging.debug(f"-> matched!")
+            return True
+        else:
+            logging.debug(f"-> no match (not equal)")
+            return False
 
 
 def _get_image(line: str) -> str:
