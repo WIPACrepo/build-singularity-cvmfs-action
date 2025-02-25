@@ -34,6 +34,15 @@ def _matches_pattern(image_pattern: str, cvmfs_image: str) -> bool:
         return cvmfs_image == image_pattern
 
 
+def _get_image(line: str) -> str:
+    try:
+        image = line.split()[-1]
+    except IndexError:
+        image = ""
+    logging.debug(f"image: {line=} -> {image=}")
+    return image
+
+
 def main() -> None:
     """Main function."""
     parser = argparse.ArgumentParser(
@@ -63,7 +72,7 @@ def main() -> None:
 
     # Modify lines that match the pattern
     out_lines = [
-        f"-{ln}" if _matches_pattern(image_pattern, ln.split()[-1]) else ln
+        f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
         for ln in in_lines
     ]
 
