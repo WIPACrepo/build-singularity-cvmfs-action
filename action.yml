@@ -73,6 +73,5 @@ runs:
           echo "no changes needed"
           exit 0
         fi
-        exit 1
         git push
       shell: bash
