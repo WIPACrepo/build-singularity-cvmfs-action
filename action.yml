@@ -23,6 +23,7 @@ runs:
   steps:
     - name: Check Inputs
       run: |
+        set -euo pipefail
         if [[ -n "${{ inputs.delete_image_tags }}" ]]; then
           if [[ -z "${{ inputs.dest_dir }}" || -n "${{ inputs.docker_tags }}" ]]; then
             echo "::error::Input Error: 'delete_image_tags' requires 'dest_dir' and forbids 'docker_tags'."
@@ -46,6 +47,7 @@ runs:
 
     - name: Git config
       run: |
+        set -euo pipefail
         git config user.name github-actions
         git config user.email github-actions@github.com
       shell: bash
@@ -53,6 +55,7 @@ runs:
     - name: Request Removal(s) on CVMFS
       if: inputs.delete_image_tags != ''
       run: |
+        set -euo pipefail
         python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
             --delete-image-tags "${{ inputs.delete_image_tags }}"
@@ -63,6 +66,7 @@ runs:
 
     - name: Push changes
       run: |
+        set -euo pipefail
         status=`git status 2>&1 | tee`
         ahead=`echo -n "${status}" | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
         if [ "$ahead" -eq "1" ]; then
