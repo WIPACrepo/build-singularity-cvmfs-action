@@ -7,8 +7,8 @@ import re
 DOCKER_IMAGES_FILE = "./docker_images.txt"
 
 TAG_PATTERN_SHA_SUFFIX = re.compile(
-    r"^(?P<base>.+)-(?P<sha>[a-f0-9]+)$"
-)  # Match `branch-[SHA]`
+    r"^(?P<base>.+)(?P<sha>[a-f0-9]+)$"
+)  # Match `(branch-)[SHA]`
 
 
 def _matches_pattern(image_pattern: str, image: str) -> bool:
