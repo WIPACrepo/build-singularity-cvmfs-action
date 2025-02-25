@@ -6,19 +6,22 @@ import re
 
 DOCKER_IMAGES_FILE = "./docker_images.txt"
 
-TAG_PATTERN_SHA_SUFFIX = re.compile(
-    r"^(?P<base>.+)(?P<sha>[a-f0-9]+)$"
-)  # Match `(branch-)[SHA]`
+SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
+SHA_TOKEN = "[SHA]"
 
 
-def _matches_pattern(image_pattern: str, image: str) -> bool:
+def _matches_pattern(image_pattern: str, cvmfs_image: str) -> bool:
     # [SHA] suffix
-    if image_pattern.endswith("[SHA]"):
-        match = TAG_PATTERN_SHA_SUFFIX.fullmatch(image)
-        return (match is not None) and (match.group("base") == image_pattern)
+    if image_pattern.endswith(SHA_TOKEN):
+        base = image_pattern[: -len(SHA_TOKEN)]  # w/o SHA_TOKEN suffix
+        if not cvmfs_image.startswith(base):
+            return False
+        potential_sha = cvmfs_image[len(base) :]  # the suffix of an actual image
+        return bool(SHA_PATTERN.fullmatch(potential_sha))
+    # FUTURE DEV: support additional string tokens
     # Exact match case
     else:
-        return image == image_pattern
+        return cvmfs_image == image_pattern
 
 
 def main() -> None:
