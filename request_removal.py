@@ -7,7 +7,9 @@ DOCKER_IMAGES_FILE = "./docker_images.txt"
 
 
 def _prefix_match(full_prefix: str, line: str) -> bool:
-    return line.split()[-1].startswith(full_prefix)
+    does_match = line.split()[-1].startswith(full_prefix)
+    logging.debug(f"Checking '{line=}' against '{full_prefix=}' -> {does_match=}")
+    return does_match
 
 
 def main() -> None:
@@ -34,7 +36,7 @@ def main() -> None:
     with open(DOCKER_IMAGES_FILE, "r") as f:
         in_lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
 
-    # Modify lines that start with the given prefix
+    # Modify lines that start with the given prefix, ex: "realtime/my-branch-"
     full_prefix = f"{args.dest_dir}/{args.delete_image_tags_prefix}"
     out_lines = [f"-{ln}" if _prefix_match(full_prefix, ln) else ln for ln in in_lines]
 
