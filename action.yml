@@ -1,62 +1,46 @@
-name: 'build-singularity-cvmfs-action'
-description: 'GitHub Action Package for Requesting Singularity Builds on CVMFS'
-branding:
-  icon: 'upload-cloud'
-  color: 'blue'
-
 inputs:
   github_token:
     description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
     required: true
-    default: ''
-  remove_regex_path:
-    description: 'DELETION MODE: what dir(s) to rm; e.g. realtime/my-branch.*'  # realtime/${{ github.event.ref }}.*'
-    default: ''
-  docker_tags:
-    description: 'the list of Docker image tags requested to be built on CVMFS'  # use `${{ needs.docker.outputs.tags }}`
-    type: string
-    default: ''
   dest_dir:
-    description: 'the CVMFS sub-directory to place the image(s)'
+    description: 'the CVMFS sub-directory to place/remove images'
+    required: true
+  docker_tags:
+    description: 'the list of Docker image tags requested to be built on CVMFS'
     default: ''
   include_docker_repo:
-    description: 'whether to include the docker repo when inserting into CVMFS dir; e.g. icecube/skymap_scanner:3 -> DEST_DIR/skymap_scanner:3 OR DEST_DIR/icecube/skymap_scanner:3'
-    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
+    description: 'whether to include the docker repo when inserting into CVMFS dir'
+    type: boolean
     default: 'true'
-
-# outputs:
-#   random-number:
-#     description: "Random number"
-#     value: ${{ steps.random-number-generator.outputs.random-id }}
+  delete_image_tags_prefix:
+    description: 'DELETION MODE: Image tag prefix to match for removal'
+    default: ''
 
 runs:
   using: "composite"
   steps:
     - name: Check Inputs
       run: |
-        # DELETION MODE
-        if [[ "${{ inputs.remove_regex_path }}" != '' ]]; then
-          # using 'remove_regex_path' -> everything else must be the default value
-          if [[ ! (-z "${{ inputs.docker_tags }}" && -z "${{ inputs.dest_dir }}" && "${{ inputs.include_docker_repo }}" == 'true') ]]; then
-            echo "Input Error: 'remove_regex_path' is given--no other inputs (other than 'github_token') may be given."
+        if [[ -n "${{ inputs.delete_image_tags_prefix }}" ]]; then
+          if [[ -z "${{ inputs.dest_dir }}" || -n "${{ inputs.docker_tags }}" ]]; then
+            echo "::error::Input Error: 'delete_image_tags_prefix' requires 'dest_dir' and forbids 'docker_tags'."
             exit 1
           fi
-        # CREATION MODE
-        elif [[ "${{ inputs.docker_tags }}" == '' ]]; then
-          echo "Input Error: 'docker_tags' is empty string"
+        elif [[ -z "${{ inputs.docker_tags }}" ]]; then
+          echo "::error::Input Error: 'docker_tags' is required for build mode."
           exit 1
         fi
       shell: bash
 
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.11'  # NOTE: update, someday
+        python-version: '3.11'
 
     - name: Checkout WIPACrepo/cvmfs-actions
       uses: actions/checkout@v3
       with:
         repository: WIPACrepo/cvmfs-actions
-        token: ${{ inputs.github_token }}  # so job can git push
+        token: ${{ inputs.github_token }}
 
     - name: Git config
       run: |
@@ -64,52 +48,24 @@ runs:
         git config user.email github-actions@github.com
       shell: bash
 
-    - name: Request Build(s) on CVMFS
-      if: "${{ inputs.remove_regex_path == '' }}"
-      run: |
-        # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
-        if [[ "${{ inputs.include_docker_repo }}" == "true" ]]; then
-          REMOVE_DOCKER_REPO=''
-        elif [[ "${{ inputs.include_docker_repo }}" == "false" ]]; then
-          REMOVE_DOCKER_REPO='--remove-docker-repo'
-        else
-          echo "ERROR: Unsupported input: 'include_docker_repo' (${{ inputs.include_docker_repo }})"
-          exit 1
-        fi
-
-        for TAG in "${{ inputs.docker_tags }}"; do
-          echo $TAG
-          python3 ${{ github.action_path }}/request_build.py \
-              --docker-tag $TAG \
-              --dest-dir ${{ inputs.dest_dir }} \
-              $REMOVE_DOCKER_REPO
-          # add & commit
-          git add docker_images.txt || true
-          git commit -m "<bot> docker_images.txt: request build ($TAG)" || true
-        done
-      shell: bash
-
     - name: Request Removal(s) on CVMFS
-      if: "${{ inputs.remove_regex_path != '' }}"
+      if: ${{ inputs.delete_image_tags_prefix != '' }}
       run: |
-        echo ${{ inputs.remove_regex_path }}
         python3 ${{ github.action_path }}/request_removal.py \
-            --remove-regex-path "${{ inputs.remove_regex_path }}"
-
-        # add & commit
+            --dest-dir "${{ inputs.dest_dir }}" \
+            --delete-image-tags-prefix "${{ inputs.delete_image_tags_prefix }}"
+        
         git add docker_images.txt || true
-        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.remove_regex_path }})" || true
+        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.delete_image_tags_prefix }})" || true
       shell: bash
 
     - name: Push changes
       run: |
         status=`git status 2>&1 | tee`
-        ahead=`echo -n "${status}" 2> /dev/null | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
+        ahead=`echo -n "${status}" | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
         if [ "$ahead" -eq "1" ]; then
           echo "no changes needed"
           exit 0
         fi
         git push
       shell: bash
-
-

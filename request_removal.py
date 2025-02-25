@@ -1,10 +1,13 @@
-"""Update ./docker_images.txt with an/multiple image removal(s)."""
+"""Update ./docker_images.txt with image removals based on image tag prefix and dest dir."""
 
 import argparse
 import logging
-import re
 
 DOCKER_IMAGES_FILE = "./docker_images.txt"
+
+
+def _prefix_match(full_prefix: str, line: str) -> bool:
+    return line.split()[-1].startswith(full_prefix)
 
 
 def main() -> None:
@@ -14,25 +17,26 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--remove-regex-path",
+        "--dest-dir",
         required=True,
-        help="The cvmfs directory path(s)",
+        help="CVMFS destination directory",
     )
-
+    parser.add_argument(
+        "--delete-image-tags-prefix",
+        required=True,
+        help="Image tag prefix to match for removal",
+    )
     args = parser.parse_args()
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
-
-    # TAG  = "icecube/skymap_scanner:3"
-    # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
 
     # read
     with open(DOCKER_IMAGES_FILE, "r") as f:
         in_lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
 
-    matcher = re.compile(rf"^[^-].+ {args.remove_regex_path}$")  # compile once
-    # negate any matched lines, keep the rest
-    out_lines = [f"-{ln}" if matcher.match(ln) else ln for ln in in_lines]
+    # Modify lines that start with the given prefix
+    full_prefix = f"{args.dest_dir}/{args.delete_image_tags_prefix}"
+    out_lines = [f"-{ln}" if _prefix_match(full_prefix, ln) else ln for ln in in_lines]
 
     # log changed lines
     for a, b in zip(in_lines, out_lines):
