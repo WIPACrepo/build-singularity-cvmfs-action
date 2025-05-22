@@ -10,7 +10,7 @@ DOCKER_IMAGES_FILE = "./docker_images.txt"
 def main() -> None:
     """Main."""
     parser = argparse.ArgumentParser(
-        description=(f"Update {DOCKER_IMAGES_FILE}"),
+        description=f"Update {DOCKER_IMAGES_FILE}",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -48,8 +48,9 @@ def main() -> None:
 
     # read
     with open(DOCKER_IMAGES_FILE, "r") as f:
-        lines = [ln.strip() for ln in f.readlines()]  # rm each trailing '\n'
-        # remove all instances of the line
+        lines = [ln.strip() for ln in f.readlines()]  # remove each trailing '\n'
+        lines = [ln for ln in lines if ln]  # remove empty lines
+        # remove all variations of `cvmfs_image_str`
         lines = [
             ln for ln in lines if ln not in [cvmfs_image_str, f"-{cvmfs_image_str}"]
         ]
@@ -60,7 +61,8 @@ def main() -> None:
 
     # write
     with open(DOCKER_IMAGES_FILE, "w") as f:
-        f.write("\n".join(lines))
+        for ln in lines:
+            f.write(ln + "\n")
 
 
 if __name__ == "__main__":
