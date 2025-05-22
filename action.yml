@@ -38,6 +38,7 @@ runs:
           echo "::error::Input Error: 'docker_tags' is required for build mode."
           exit 1
         fi
+
       shell: bash
 
     - uses: actions/setup-python@v4
@@ -73,16 +74,18 @@ runs:
           echo "ERROR: Unsupported input: 'include_docker_repo' (${{ inputs.include_docker_repo }})"
           exit 1
         fi
+        
+        # update and commit for each tag
         for TAG in "${{ inputs.docker_tags }}"; do
           echo $TAG
           python3 ${{ github.action_path }}/request_build.py \
               --docker-tag $TAG \
               --dest-dir ${{ inputs.dest_dir }} \
               $REMOVE_DOCKER_REPO
-          # add & commit
           git add docker_images.txt || true
-          git commit -m "<bot> docker_images.txt: request build ($TAG)" || true
+          git commit -m "<bot> build: $TAG" || true
         done
+
       shell: bash
 
     - name: Request Removal(s) on CVMFS
@@ -96,7 +99,8 @@ runs:
             --delete-image-tags "${{ inputs.delete_image_tags }}"
         
         git add docker_images.txt || true
-        git commit -m "<bot> docker_images.txt: request removal (${{ inputs.delete_image_tags }})" || true
+        git commit -m "<bot> remove: ${{ inputs.delete_image_tags }}" || true
+
       shell: bash
 
     - name: Push changes
@@ -111,4 +115,5 @@ runs:
           exit 0
         fi
         git push
+
       shell: bash
