@@ -85,8 +85,6 @@ runs:
           git add docker_images.txt || true
           git commit -m "<bot> build: $TAG" || true
         done
-        
-        cat -A docker_images.txt  # useful for debugging
 
       shell: bash
 
