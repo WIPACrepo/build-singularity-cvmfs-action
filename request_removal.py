@@ -1,11 +1,11 @@
-"""Update ./docker_images.txt with image removals based on image tag pattern and dest dir."""
+"""Update the docker-images file with image removals based on image tag pattern and dest dir."""
 
 import argparse
 import logging
+import os
 import re
 from pathlib import Path
 
-DOCKER_IMAGES_FILE = "./docker_images.txt"
 
 SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
 SHA_TOKEN = "[SHA]"
@@ -60,7 +60,7 @@ def _get_image(line: str) -> str:
 def main() -> None:
     """Main."""
     parser = argparse.ArgumentParser(
-        description=(f"Update {DOCKER_IMAGES_FILE}"),
+        description=f"Update {os.environ['DOCKER_IMAGES_FILE']} to remove image(s)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -79,7 +79,7 @@ def main() -> None:
         logging.warning(f"{arg}: {val}")
 
     # read
-    with open(DOCKER_IMAGES_FILE, "r") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "r") as f:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
     # Modify lines that match the pattern
@@ -95,7 +95,7 @@ def main() -> None:
             logging.debug(f"Changed Line: {a} -> {b}")
 
     # write
-    with open(DOCKER_IMAGES_FILE, "w") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "w") as f:
         f.write("\n".join(out_lines) + "\n")
 
 

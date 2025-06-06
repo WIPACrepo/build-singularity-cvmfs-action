@@ -22,6 +22,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set Global Env Vars
+      run: |
+        # step: Set Global Env Vars
+        set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+        
+        echo "DOCKER_IMAGES_FILE=./docker_images.txt" >> "$GITHUB_ENV"
+
+      shell: bash
+
     - name: Check Inputs
       run: |
         # step: Check Inputs
@@ -71,7 +80,7 @@ runs:
           python3 ${{ github.action_path }}/request_build.py \
               --docker-tag $TAG \
               --dest-dir ${{ inputs.dest_dir }}
-          git add docker_images.txt || true
+          git add "$DOCKER_IMAGES_FILE" || true
           git commit -m "<bot> build: $TAG" || true
         done
 
@@ -94,7 +103,7 @@ runs:
             --image-tag-pattern "$TAG"
         done
         
-        git add docker_images.txt || true
+        git add "$DOCKER_IMAGES_FILE" || true
         git commit -m "<bot> remove: ${DELETE_TAGS[*]}" || true
 
       shell: bash
