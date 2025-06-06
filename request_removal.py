@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 
+from utils import valid_image_tag_pattern
 
 SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
 SHA_TOKEN = "[SHA]"
@@ -72,6 +73,7 @@ def main() -> None:
     parser.add_argument(
         "--image-tag-pattern",
         required=True,
+        type=valid_image_tag_pattern,
         help="Image tag to match (e.g., 'branch' for 'branch-[SHA]' or full tag for exact match)",
     )
     args = parser.parse_args()

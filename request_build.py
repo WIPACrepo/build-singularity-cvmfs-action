@@ -5,6 +5,8 @@ import logging
 import os
 from pathlib import Path
 
+from utils import valid_image_tag
+
 
 def main() -> None:
     """Main."""
@@ -15,6 +17,7 @@ def main() -> None:
     parser.add_argument(
         "--docker-tag",
         required=True,
+        type=valid_image_tag,
         help="The docker image tag",
     )
     parser.add_argument(
