@@ -101,10 +101,9 @@ runs:
           python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-tag-pattern "$TAG"
+          git add "$DOCKER_IMAGES_FILE" || true
+          git commit -m "<bot> remove: $TAG" || true
         done
-        
-        git add "$DOCKER_IMAGES_FILE" || true
-        git commit -m "<bot> remove: ${DELETE_TAGS[*]}" || true
 
       shell: bash
 
