@@ -2,7 +2,7 @@
 
 import argparse
 import logging
-import os
+from pathlib import Path
 
 DOCKER_IMAGES_FILE = "./docker_images.txt"
 
@@ -20,31 +20,19 @@ def main() -> None:
     )
     parser.add_argument(
         "--dest-dir",
-        default="",
-        help="The destination directory, eg: realtime",
-    )
-    parser.add_argument(
-        "--remove-docker-repo",
-        default=False,
-        action="store_true",
-        help="whether to remove the docker image's repo when inserting to CVMFS dir",
+        required=True,
+        type=Path,
+        help="The destination directory, eg: 'realtime', 'ewms/observation-management-service', ...",
     )
 
     args = parser.parse_args()
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
 
+    # assemble line for docker_images.txt
     # TAG  = "icecube/skymap_scanner:3"
     # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
-
-    if args.remove_docker_repo:
-        dest_file = args.docker_tag.split("/", maxsplit=1)[1]
-    else:
-        dest_file = args.docker_tag
-
-    cvmfs_image_str = (
-        f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
-    )
+    cvmfs_image_str = f"docker://{args.docker_tag} {args.dest_dir / args.docker_tag}"
 
     # read
     with open(DOCKER_IMAGES_FILE, "r") as f:

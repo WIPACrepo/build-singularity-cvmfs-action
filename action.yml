@@ -11,10 +11,6 @@ inputs:
     description: 'the list of Docker image tags requested to be built on CVMFS'  # use `${{ needs.docker.outputs.tags }}`
     type: string
     default: ''
-  include_docker_repo:
-    description: 'whether to include the docker repo when inserting into CVMFS dir; e.g. icecube/skymap_scanner:3 -> DEST_DIR/skymap_scanner:3 OR DEST_DIR/icecube/skymap_scanner:3'
-    type: boolean  # the incoming type is boolean, but to access it's a string; e.i. 'true', 'false'
-    default: 'true'
   delete_image_tags:
     description: 'DELETION MODE: Image tag to match (full tag or prefix for SHA matching)'
     default: ''
@@ -65,23 +61,12 @@ runs:
         # step: Request Build(s) on CVMFS
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        # figure REMOVE_DOCKER_REPO (--remove-docker-repo)
-        if [[ "${{ inputs.include_docker_repo }}" == "true" ]]; then
-          REMOVE_DOCKER_REPO=''
-        elif [[ "${{ inputs.include_docker_repo }}" == "false" ]]; then
-          REMOVE_DOCKER_REPO='--remove-docker-repo'
-        else
-          echo "ERROR: Unsupported input: 'include_docker_repo' (${{ inputs.include_docker_repo }})"
-          exit 1
-        fi
-        
         # update and commit for each tag
         for TAG in "${{ inputs.docker_tags }}"; do
           echo $TAG
           python3 ${{ github.action_path }}/request_build.py \
               --docker-tag $TAG \
-              --dest-dir ${{ inputs.dest_dir }} \
-              $REMOVE_DOCKER_REPO
+              --dest-dir ${{ inputs.dest_dir }}
           git add docker_images.txt || true
           git commit -m "<bot> build: $TAG" || true
         done
