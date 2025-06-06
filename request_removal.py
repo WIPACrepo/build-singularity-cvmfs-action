@@ -3,6 +3,7 @@
 import argparse
 import logging
 import re
+from pathlib import Path
 
 DOCKER_IMAGES_FILE = "./docker_images.txt"
 
@@ -65,10 +66,11 @@ def main() -> None:
     parser.add_argument(
         "--dest-dir",
         required=True,
+        type=Path,
         help="CVMFS destination directory",
     )
     parser.add_argument(
-        "--delete-image-tags",
+        "--image-tag-pattern",
         required=True,
         help="Image tag to match (e.g., 'branch' for 'branch-[SHA]' or full tag for exact match)",
     )
@@ -81,7 +83,7 @@ def main() -> None:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
     # Modify lines that match the pattern
-    image_pattern = f"{args.dest_dir}/{args.delete_image_tags}"
+    image_pattern = f"{args.dest_dir}/{args.image_tag_pattern}"
     out_lines = [
         f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
         for ln in in_lines

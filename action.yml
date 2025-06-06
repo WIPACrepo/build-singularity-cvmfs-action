@@ -81,7 +81,7 @@ runs:
         
         python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
-            --delete-image-tags "${{ inputs.delete_image_tags }}"
+            --image-tag-pattern "${{ inputs.delete_image_tags }}"
         
         git add docker_images.txt || true
         git commit -m "<bot> remove: ${{ inputs.delete_image_tags }}" || true
