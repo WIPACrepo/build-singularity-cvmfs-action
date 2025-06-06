@@ -9,10 +9,14 @@ inputs:
     required: true
   docker_tags:
     description: 'the list of Docker image tags requested to be built on CVMFS'  # use `${{ needs.docker.outputs.tags }}`
-    type: string
     default: ''
   delete_image_tags:
-    description: 'DELETION MODE: Image tag to match (full tag or prefix for SHA matching)'
+    description: |
+      DELETION MODE: Newline-delimited image tags to remove (as literal names or known patterns).
+      Example:
+        delete_image_tags: |
+          v1.2.3
+          main-[SHA]
     default: ''
 
 runs:
@@ -79,12 +83,19 @@ runs:
         # step: Request Removal(s) on CVMFS
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        python3 ${{ github.action_path }}/request_removal.py \
+        # load into array (w/ trimming)
+        mapfile -t DELETE_TAGS < <(printf '%s\n' "${{ inputs.delete_image_tags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
+        
+        # request all matches for each tag (pattern)
+        for TAG in "${DELETE_TAGS[@]}"; do
+          echo "Removing tag: $TAG"
+          python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
-            --image-tag-pattern "${{ inputs.delete_image_tags }}"
+            --image-tag-pattern "$TAG"
+        done
         
         git add docker_images.txt || true
-        git commit -m "<bot> remove: ${{ inputs.delete_image_tags }}" || true
+        git commit -m "<bot> remove: ${DELETE_TAGS[*]}" || true
 
       shell: bash
 
