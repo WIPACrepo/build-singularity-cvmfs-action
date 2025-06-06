@@ -36,13 +36,25 @@ runs:
         # step: Check Inputs
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        # DELETION MODE
+        # UNSUPPORTED INPUT
+        if [[ -n "${{ inputs.include_docker_repo }}" ]]; then
+          echo "::error::Input Error: 'include_docker_repo' has been deprecated -- rely solely on 'dest_dir'."
+          exit 1
+        fi
+        
+        # REQUIRED INPUT
+        if [[ -z "${{ inputs.dest_dir }}" ]]; then
+          echo "::error::Input Error: 'dest_dir' is required."
+          exit 1
+        fi
+        
+        # DELETION MODE?
         if [[ -n "${{ inputs.delete_image_tags }}" ]]; then
-          if [[ -z "${{ inputs.dest_dir }}" || -n "${{ inputs.docker_tags }}" ]]; then
-            echo "::error::Input Error: 'delete_image_tags' requires 'dest_dir' and forbids 'docker_tags'."
+          if [[ -n "${{ inputs.docker_tags }}" ]]; then
+            echo "::error::Input Error: 'delete_image_tags' forbids 'docker_tags'."
             exit 1
           fi
-        # CREATION MODE
+        # CREATION MODE?
         elif [[ -z "${{ inputs.docker_tags }}" ]]; then
           echo "::error::Input Error: 'docker_tags' is required for build mode."
           exit 1
