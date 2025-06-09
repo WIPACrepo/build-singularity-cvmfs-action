@@ -128,7 +128,7 @@ runs:
         # step: View changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        git show --stat
+        git log origin/main..HEAD --patch --reverse
 
       shell: bash
 
