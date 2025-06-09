@@ -1,6 +1,15 @@
 """Utility functions."""
 
+import dataclasses
 import re
+
+
+@dataclasses.dataclass
+class ImageParsed:
+    """Parts of the image uri/name/tag"""
+
+    uri: str
+    nametag: str
 
 
 _IMAGE_NAME = r"[a-z0-9._-]+"
@@ -11,11 +20,14 @@ IMAGE_NAMETAG_RE = re.compile(rf"^{_IMAGE_NAME}:{_TAG_VERBATIM}$")
 IMAGE_NAMETAG_PATTERN_RE = re.compile(rf"^{_IMAGE_NAME}:{_TAG_PATTERN}$")
 
 
-def valid_image_nametag(image_nametag: str) -> str:
-    """Return `image_nametag` if it is a valid image name w/ tag.`"""
-    if not IMAGE_NAMETAG_RE.fullmatch(image_nametag):
-        raise ValueError(f"Invalid image name/tag: {image_nametag}")
-    return image_nametag
+def parse_image_uri(image_uri: str) -> ImageParsed:
+    """Return `ImageParsed` obj if it is a valid image uri w/ name and tag."""
+
+    nametag = image_uri.split("/")[-1]
+    if not IMAGE_NAMETAG_RE.fullmatch(nametag):
+        raise ValueError(f"Invalid image name/tag ({nametag}) for uri: {image_uri}")
+
+    return ImageParsed(image_uri, nametag)
 
 
 def valid_image_nametag_pattern(image_nametag_pattern: str) -> str:

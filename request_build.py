@@ -5,7 +5,7 @@ import logging
 import os
 from pathlib import Path
 
-from utils import valid_image_nametag
+from utils import parse_image_uri
 
 
 def main() -> None:
@@ -15,10 +15,11 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--image-nametag",
+        "--image-uri",
+        dest="image",  # type is 'ImageParsed'
         required=True,
-        type=valid_image_nametag,
-        help="The docker image name w/ tag",
+        type=parse_image_uri,
+        help="The docker image uri w/ name and tag, eg: 'icecube/skymap_scanner:4.0.0', 'ghcr.io/wipacrepo/iceprod:3.0.52', ...",
     )
     parser.add_argument(
         "--dest-dir",
@@ -32,9 +33,7 @@ def main() -> None:
         logging.warning(f"{arg}: {val}")
 
     # assemble line for the docker-images file
-    # TAG  = "icecube/skymap_scanner:3"
-    # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
-    cvmfs_image_str = f"docker://{args.docker_tag} {args.dest_dir / args.docker_tag}"
+    cvmfs_image_str = f"docker://{args.image.uri} {args.dest_dir / args.image.nametag}"
 
     # read
     with open(os.environ["DOCKER_IMAGES_FILE"], "r") as f:

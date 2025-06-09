@@ -91,7 +91,7 @@ runs:
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_build.py \
-              --image-nametag "$IMAGE" \
+              --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
           git add "$DOCKER_IMAGES_FILE" || true
