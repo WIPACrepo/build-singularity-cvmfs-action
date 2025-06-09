@@ -27,7 +27,7 @@ runs:
         # step: Set Global Env Vars
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        echo "DOCKER_IMAGES_FILE=./docker_images.txt" >> "$GITHUB_ENV"
+        echo "DOCKER_IMAGES_FILE=docker_images.txt" >> "$GITHUB_ENV"
 
       shell: bash
 
