@@ -87,15 +87,15 @@ runs:
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         # update and commit for each tag
-        for TAG in "${{ inputs.docker_tags }}"; do
-          echo $TAG
+        for IMAGE in "${{ inputs.docker_tags }}"; do
+          echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_build.py \
-              --docker-tag $TAG \
+              --image-nametag "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
           git add "$DOCKER_IMAGES_FILE" || true
-          git commit -m "<bot> build: $TAG" || true
+          git commit -m "<bot> build: $IMAGE" || true
         done
 
       shell: bash
@@ -107,18 +107,18 @@ runs:
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         # load into array (w/ trimming)
-        mapfile -t DELETE_TAGS < <(printf '%s\n' "${{ inputs.delete_image_tags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
+        mapfile -t DELETE_IMAGES < <(printf '%s\n' "${{ inputs.delete_image_tags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
         
         # request all matches for each tag (pattern)
-        for TAG in "${DELETE_TAGS[@]}"; do
-          echo "Removing tag: $TAG"
+        for IMAGE in "${DELETE_IMAGES[@]}"; do
+          echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
-            --image-tag-pattern "$TAG"
+            --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
           git add "$DOCKER_IMAGES_FILE" || true
-          git commit -m "<bot> remove: $TAG" || true
+          git commit -m "<bot> remove: $IMAGE" || true
         done
 
       shell: bash

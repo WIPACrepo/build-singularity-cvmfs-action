@@ -5,7 +5,7 @@ import logging
 import os
 from pathlib import Path
 
-from utils import valid_image_tag
+from utils import valid_image_nametag
 
 
 def main() -> None:
@@ -15,10 +15,10 @@ def main() -> None:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--docker-tag",
+        "--image-nametag",
         required=True,
-        type=valid_image_tag,
-        help="The docker image tag",
+        type=valid_image_nametag,
+        help="The docker image name w/ tag",
     )
     parser.add_argument(
         "--dest-dir",

@@ -6,27 +6,27 @@ import os
 import re
 from pathlib import Path
 
-from utils import valid_image_tag_pattern
+from utils import valid_image_nametag_pattern
 
 SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
 SHA_TOKEN = "[SHA]"
 
 
-def _matches_pattern(image_pattern: str, image: str) -> bool:
+def _matches_pattern(full_image_pattern: str, image: str) -> bool:
     """Determine if a CVMFS image matches the given pattern w/ known tokens."""
 
-    if image_pattern.startswith("-"):  # this image has already been removed
+    if full_image_pattern.startswith("-"):  # this image has already been removed
         return False
 
     # [SHA] suffix
-    if image_pattern.endswith(SHA_TOKEN):
-        logging.debug(f"trying [SHA]-pattern: {image_pattern=} -> {image=}")
+    if full_image_pattern.endswith(SHA_TOKEN):
+        logging.debug(f"trying [SHA]-pattern: {full_image_pattern=} -> {image=}")
         # Example Matches:
         # "feature-branch-[SHA]" -> Matches "feature-branch-abc123"
         # "feature-branch-[SHA]" -> Does NOT match "feature-branch-xyz-abc123"
 
         # w/o SHA_TOKEN suffix (ex: feature-branch-)
-        base = image_pattern[: -len(SHA_TOKEN)]
+        base = full_image_pattern[: -len(SHA_TOKEN)]
         if not image.startswith(base):
             logging.debug(f"-> no match (does not start with {base=})")
             return False
@@ -45,8 +45,8 @@ def _matches_pattern(image_pattern: str, image: str) -> bool:
 
     # Exact match case
     else:
-        logging.debug(f"trying exact-name match: {image_pattern=} -> {image=}")
-        if image == image_pattern:
+        logging.debug(f"trying exact-name match: {full_image_pattern=} -> {image=}")
+        if image == full_image_pattern:
             logging.debug(f"-> matched!")
             return True
         else:
@@ -76,10 +76,10 @@ def main() -> None:
         help="CVMFS destination directory",
     )
     parser.add_argument(
-        "--image-tag-pattern",
+        "--image-nametag-pattern",
         required=True,
-        type=valid_image_tag_pattern,
-        help="Image tag to match (e.g., 'branch' for 'branch-[SHA]' or full tag for exact match)",
+        type=valid_image_nametag_pattern,
+        help="Image tag to match (ex: 'foo:branch-[SHA]', or full tag for exact match)",
     )
     args = parser.parse_args()
     for arg, val in vars(args).items():
@@ -90,9 +90,9 @@ def main() -> None:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
     # Modify lines that match the pattern
-    image_pattern = str(args.dest_dir / args.image_tag_pattern)
+    full_image_pattern = str(args.dest_dir / args.image_nametag_pattern)
     out_lines = [
-        f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
+        f"-{ln}" if _matches_pattern(full_image_pattern, _get_image(ln)) else ln
         for ln in in_lines
     ]
 
