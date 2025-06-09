@@ -1,33 +1,38 @@
-"""Update ./docker_images.txt with image removals based on image tag pattern and dest dir."""
+"""Update the docker-images file with image removals based on image tag pattern and dest dir."""
 
 import argparse
 import logging
+import os
 import re
+from pathlib import Path
 
-DOCKER_IMAGES_FILE = "./docker_images.txt"
+from utils import valid_image_nametag_pattern
 
 SHA_PATTERN = re.compile(r"^(?P<sha>[a-f0-9]+)$")
 SHA_TOKEN = "[SHA]"
 
 
-def _matches_pattern(image_pattern: str, image: str) -> bool:
+def _matches_pattern(full_image_pattern: str, line: str) -> bool:
     """Determine if a CVMFS image matches the given pattern w/ known tokens."""
+    if line.startswith("-"):  # this image has already been removed
+        return False
+    line_image = _get_line_image(line)
 
     # [SHA] suffix
-    if image_pattern.endswith(SHA_TOKEN):
-        logging.debug(f"trying [SHA]-pattern: {image_pattern=} -> {image=}")
+    if full_image_pattern.endswith(SHA_TOKEN):
+        logging.debug(f"trying [SHA]-pattern: {full_image_pattern=} -> {line_image=}")
         # Example Matches:
         # "feature-branch-[SHA]" -> Matches "feature-branch-abc123"
         # "feature-branch-[SHA]" -> Does NOT match "feature-branch-xyz-abc123"
 
         # w/o SHA_TOKEN suffix (ex: feature-branch-)
-        base = image_pattern[: -len(SHA_TOKEN)]
-        if not image.startswith(base):
+        base = full_image_pattern[: -len(SHA_TOKEN)]
+        if not line_image.startswith(base):
             logging.debug(f"-> no match (does not start with {base=})")
             return False
 
         # the suffix of an actual image (ex: abc123 -> True; xyz-abc123 -> False)
-        potential_sha = image[len(base) :]
+        potential_sha = line_image[len(base) :]
         if SHA_PATTERN.fullmatch(potential_sha):
             logging.debug(f"-> matched!")
             return True
@@ -36,10 +41,14 @@ def _matches_pattern(image_pattern: str, image: str) -> bool:
             return False
 
     # FUTURE DEV: support additional string tokens
+    # elif...
+
     # Exact match case
     else:
-        logging.debug(f"trying exact-name match: {image_pattern=} -> {image=}")
-        if image == image_pattern:
+        logging.debug(
+            f"trying exact-name match: {full_image_pattern=} -> {line_image=}"
+        )
+        if line_image == full_image_pattern:
             logging.debug(f"-> matched!")
             return True
         else:
@@ -47,44 +56,43 @@ def _matches_pattern(image_pattern: str, image: str) -> bool:
             return False
 
 
-def _get_image(line: str) -> str:
+def _get_line_image(line: str) -> str:
     try:
-        image = line.split()[-1]
+        return line.split()[-1]
     except IndexError:
-        image = ""
-    logging.debug(f"image: {line=} -> {image=}")
-    return image
+        return ""
 
 
 def main() -> None:
     """Main."""
     parser = argparse.ArgumentParser(
-        description=(f"Update {DOCKER_IMAGES_FILE}"),
+        description=f"Update {os.environ['DOCKER_IMAGES_FILE']} to remove image(s)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "--dest-dir",
         required=True,
+        type=Path,
         help="CVMFS destination directory",
     )
     parser.add_argument(
-        "--delete-image-tags",
+        "--image-nametag-pattern",
         required=True,
-        help="Image tag to match (e.g., 'branch' for 'branch-[SHA]' or full tag for exact match)",
+        type=valid_image_nametag_pattern,
+        help="Image tag to match (ex: 'foo:branch-[SHA]', or full tag for exact match)",
     )
     args = parser.parse_args()
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
 
     # read
-    with open(DOCKER_IMAGES_FILE, "r") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "r") as f:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
     # Modify lines that match the pattern
-    image_pattern = f"{args.dest_dir}/{args.delete_image_tags}"
+    full_image_pattern = str(args.dest_dir / args.image_nametag_pattern)
     out_lines = [
-        f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
-        for ln in in_lines
+        f"-{ln}" if _matches_pattern(full_image_pattern, ln) else ln for ln in in_lines
     ]
 
     # log changed lines
@@ -93,7 +101,7 @@ def main() -> None:
             logging.debug(f"Changed Line: {a} -> {b}")
 
     # write
-    with open(DOCKER_IMAGES_FILE, "w") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "w") as f:
         f.write("\n".join(out_lines) + "\n")
 
 

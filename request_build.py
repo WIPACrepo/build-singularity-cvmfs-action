@@ -1,53 +1,42 @@
-"""Update ./docker_images.txt with a build request."""
+"""Update the docker-images file with a build request."""
 
 import argparse
 import logging
 import os
+from pathlib import Path
 
-DOCKER_IMAGES_FILE = "./docker_images.txt"
+from utils import parse_image_uri
 
 
 def main() -> None:
     """Main."""
     parser = argparse.ArgumentParser(
-        description=f"Update {DOCKER_IMAGES_FILE}",
+        description=f"Update {os.environ['DOCKER_IMAGES_FILE']} to build image(s)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--docker-tag",
+        "--image-uri",
+        dest="image",  # type is 'ImageParsed'
         required=True,
-        help="The docker image tag",
+        type=parse_image_uri,
+        help="The docker image uri w/ name and tag, eg: 'icecube/skymap_scanner:4.0.0', 'ghcr.io/wipacrepo/iceprod:3.0.52', ...",
     )
     parser.add_argument(
         "--dest-dir",
-        default="",
-        help="The destination directory, eg: realtime",
-    )
-    parser.add_argument(
-        "--remove-docker-repo",
-        default=False,
-        action="store_true",
-        help="whether to remove the docker image's repo when inserting to CVMFS dir",
+        required=True,
+        type=Path,
+        help="The destination directory, eg: 'realtime', 'ewms/observation-management-service', ...",
     )
 
     args = parser.parse_args()
     for arg, val in vars(args).items():
         logging.warning(f"{arg}: {val}")
 
-    # TAG  = "icecube/skymap_scanner:3"
-    # LINE = "docker://icecube/skymap_scanner:3 realtime/skymap_scanner:3"
-
-    if args.remove_docker_repo:
-        dest_file = args.docker_tag.split("/", maxsplit=1)[1]
-    else:
-        dest_file = args.docker_tag
-
-    cvmfs_image_str = (
-        f"docker://{args.docker_tag} {os.path.join(args.dest_dir,dest_file)}"
-    )
+    # assemble line for the docker-images file
+    cvmfs_image_str = f"docker://{args.image.uri} {args.dest_dir / args.image.nametag}"
 
     # read
-    with open(DOCKER_IMAGES_FILE, "r") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "r") as f:
         lines = [ln.strip() for ln in f.readlines()]  # remove each trailing '\n'
         lines = [ln for ln in lines if ln]  # remove empty lines
         # remove all variations of `cvmfs_image_str`
@@ -57,10 +46,10 @@ def main() -> None:
 
     # append
     lines.append(cvmfs_image_str)
-    logging.debug(f"Added line to {DOCKER_IMAGES_FILE}: {lines[-1]}")
+    logging.debug(f"Added line to {os.environ['DOCKER_IMAGES_FILE']}: {lines[-1]}")
 
     # write
-    with open(DOCKER_IMAGES_FILE, "w") as f:
+    with open(os.environ["DOCKER_IMAGES_FILE"], "w") as f:
         for ln in lines:
             f.write(ln + "\n")
 
