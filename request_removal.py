@@ -85,7 +85,7 @@ def main() -> None:
         in_lines = [ln.strip() for ln in f.readlines()]  # Remove trailing '\n'
 
     # Modify lines that match the pattern
-    image_pattern = f"{args.dest_dir}/{args.image_tag_pattern}"
+    image_pattern = str(args.dest_dir / args.image_tag_pattern)
     out_lines = [
         f"-{ln}" if _matches_pattern(image_pattern, _get_image(ln)) else ln
         for ln in in_lines
