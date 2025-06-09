@@ -89,9 +89,11 @@ runs:
         # update and commit for each tag
         for TAG in "${{ inputs.docker_tags }}"; do
           echo $TAG
+          echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_build.py \
               --docker-tag $TAG \
               --dest-dir ${{ inputs.dest_dir }}
+          echo "##[endgroup]"
           git add "$DOCKER_IMAGES_FILE" || true
           git commit -m "<bot> build: $TAG" || true
         done
@@ -110,12 +112,23 @@ runs:
         # request all matches for each tag (pattern)
         for TAG in "${DELETE_TAGS[@]}"; do
           echo "Removing tag: $TAG"
+          echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-tag-pattern "$TAG"
+          echo "##[endgroup]"
           git add "$DOCKER_IMAGES_FILE" || true
           git commit -m "<bot> remove: $TAG" || true
         done
+
+      shell: bash
+
+    - name: View changes
+      run: |
+        # step: View changes
+        set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+        
+        git show --stat
 
       shell: bash
 
