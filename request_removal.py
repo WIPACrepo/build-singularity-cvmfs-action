@@ -15,6 +15,9 @@ SHA_TOKEN = "[SHA]"
 def _matches_pattern(image_pattern: str, image: str) -> bool:
     """Determine if a CVMFS image matches the given pattern w/ known tokens."""
 
+    if image_pattern.startswith("-"):  # this image has already been removed
+        return False
+
     # [SHA] suffix
     if image_pattern.endswith(SHA_TOKEN):
         logging.debug(f"trying [SHA]-pattern: {image_pattern=} -> {image=}")
@@ -38,6 +41,8 @@ def _matches_pattern(image_pattern: str, image: str) -> bool:
             return False
 
     # FUTURE DEV: support additional string tokens
+    # elif...
+
     # Exact match case
     else:
         logging.debug(f"trying exact-name match: {image_pattern=} -> {image=}")
