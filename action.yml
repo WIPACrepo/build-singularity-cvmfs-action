@@ -144,5 +144,7 @@ runs:
           exit 0
         fi
         git push
+        
+        echo "::notice::see https://github.com/WIPACrepo/cvmfs-actions/blob/main/$DOCKER_IMAGES_FILE"
 
       shell: bash
