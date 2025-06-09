@@ -16,7 +16,7 @@ class ImageParsed:
 #   skymap_scanner:3.0.34
 #   iceprod@sha256:eb44b05c3890e85e0dd862e7e94d7cbc72fdb8c11ffec956e559058bac7efc3a
 #   skymap_scanner:binning-[SHA]
-_IMAGE_NAME = r"[a-z0-9._-@]+"  # note: '@' simply allows a digest to be included
+_IMAGE_NAME = r"[a-z0-9._-\@]+"  # note: '@' simply allows a digest to be included
 _TAG_VERBATIM = r"[a-zA-Z0-9._-]+"
 _TAG_PATTERN = r"[a-zA-Z0-9._\-\[\]]+"  # this one allows [ and ]
 
