@@ -9,9 +9,11 @@ inputs:
     required: true
   build_images:
     description: |
-      the list of Docker image tags requested to be built on CVMFS'  
-        ex: 'icecube/skymap_scanner:4.0.0', 'ghcr.io/wipacrepo/iceprod:3.0.52', ...
-        hint: use 'needs.docker.outputs.tags' from https://github.com/docker/metadata-action
+      The Docker image(s) to be built on CVMFS  
+        Image format:
+          Docker Hub            : icecube/skymap_scanner:4.0.0 
+          GH Container Registry : ghcr.io/wipacrepo/iceprod:3.0.52
+      HINT: use 'needs.docker.outputs.tags' from https://github.com/docker/metadata-action
     default: ''
   delete_image_nametags:
     description: |
