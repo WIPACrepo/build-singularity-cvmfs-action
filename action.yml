@@ -2,7 +2,7 @@ name: CVMFS Image Management
 
 inputs:
   github_token:
-    description: 'a PAT so the bot can git push to WIPACrepo/cvmfs-actions'
+    description: 'a PAT so the bot can git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push to WIPACrepo/cvmfs-actions'
     required: true
   dest_dir:
     description: 'the CVMFS sub-directory to place/remove images'
@@ -85,15 +85,15 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: WIPACrepo/cvmfs-actions
-        token: ${{ inputs.github_token }}  # so job can git push
+        token: ${{ inputs.github_token }}  # so job can git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push
         path: .cvmfs-actions  # access at $GITHUB_WORKSPACE/.cvmfs-actions
 
     - name: Git config
       run: |
         # step: Git config
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" config user.name github-actions
+        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" config user.email github-actions@github.com
       shell: bash
 
     - name: Request Build(s) on CVMFS
@@ -110,8 +110,8 @@ runs:
               --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
-          git add "$DOCKER_IMAGES_FILE" || true
-          git commit -m "<bot> build: $IMAGE" || true
+          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" add "$DOCKER_IMAGES_FILE" || true
+          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" commit -m "<bot> build: $IMAGE" || true
         done
 
       shell: bash
@@ -133,8 +133,8 @@ runs:
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
-          git add "$DOCKER_IMAGES_FILE" || true
-          git commit -m "<bot> remove: $IMAGE" || true
+          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" add "$DOCKER_IMAGES_FILE" || true
+          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" commit -m "<bot> remove: $IMAGE" || true
         done
 
       shell: bash
@@ -144,7 +144,7 @@ runs:
         # step: View changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        git diff --unified=0 origin/main...HEAD
+        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" diff --unified=0 origin/main...HEAD
 
       shell: bash
 
@@ -153,13 +153,13 @@ runs:
         # step: Push changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        status=`git status 2>&1 | tee`
+        status=`git -C "$GITHUB_WORKSPACE/.cvmfs-actions" status 2>&1 | tee`
         ahead=`echo -n "${status}" | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
         if [ "$ahead" -eq "1" ]; then
           echo "no changes needed"
           exit 0
         fi
-        git push
+        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push
         
         echo "::notice::see https://github.com/WIPACrepo/cvmfs-actions/blob/main/$DOCKER_IMAGES_FILE"
 
