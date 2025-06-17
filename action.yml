@@ -7,24 +7,31 @@ inputs:
   dest_dir:
     description: 'the CVMFS sub-directory to place/remove images'
     required: true
-  docker_tags:
-    description: 'the list of Docker image tags requested to be built on CVMFS'  # use `${{ needs.docker.outputs.tags }}`
-    default: ''
-  delete_image_tags:
+  build_images:
     description: |
-      DELETION MODE: Newline-delimited image tags to remove (as literal names or known patterns).
-      Example:
-        delete_image_tags: |
-          v1.2.3
-          main-[SHA]
+      BUILD MODE:
+        The Docker image(s) to be built on CVMFS  
+        Image format:
+          Docker Hub            : icecube/skymap_scanner:4.0.0 
+          GH Container Registry : ghcr.io/wipacrepo/iceprod:3.0.52
+      HINT: use 'needs.docker.outputs.tags' from https://github.com/docker/metadata-action
+    default: ''
+  delete_image_nametags:
+    description: |
+      DELETION MODE: 
+        Newline-delimited images (name + tag) to remove, indicated verbatim or using known patterns.
+        Example:
+          delete_image_nametags: |
+            foo:v1.2.3
+            foo:main-[SHA]
     default: ''
 
 runs:
   using: "composite"
   steps:
-    - name: Set Global Env Vars
+    - name: internal logic (set env vars)
       run: |
-        # step: Set Global Env Vars
+        # step: internal logic (set env vars)
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         echo "DOCKER_IMAGES_FILE=docker_images.txt" >> "$GITHUB_ENV"
@@ -41,6 +48,14 @@ runs:
           echo "::error::Input Error: 'include_docker_repo' has been deprecated -- rely solely on 'dest_dir'."
           exit 1
         fi
+        if [[ -n "${{ inputs.docker_tags }}" ]]; then
+          echo "::error::Input Error: 'docker_tags' has been deprecated -- use 'build_images'."
+          exit 1
+        fi
+        if [[ -n "${{ inputs.delete_image_tags }}" ]]; then
+          echo "::error::Input Error: 'delete_image_nametags' has been deprecated -- use 'delete_image_nametags'."
+          exit 1
+        fi
         
         # REQUIRED INPUT
         if [[ -z "${{ inputs.dest_dir }}" ]]; then
@@ -49,14 +64,14 @@ runs:
         fi
         
         # DELETION MODE?
-        if [[ -n "${{ inputs.delete_image_tags }}" ]]; then
-          if [[ -n "${{ inputs.docker_tags }}" ]]; then
-            echo "::error::Input Error: 'delete_image_tags' forbids 'docker_tags'."
+        if [[ -n "${{ inputs.delete_image_nametags }}" ]]; then
+          if [[ -n "${{ inputs.build_images }}" ]]; then
+            echo "::error::Input Error: 'delete_image_nametags' forbids 'build_images'."
             exit 1
           fi
         # CREATION MODE?
-        elif [[ -z "${{ inputs.docker_tags }}" ]]; then
-          echo "::error::Input Error: 'docker_tags' is required for build mode."
+        elif [[ -z "${{ inputs.build_images }}" ]]; then
+          echo "::error::Input Error: 'build_images' is required for build mode."
           exit 1
         fi
 
@@ -81,13 +96,13 @@ runs:
       shell: bash
 
     - name: Request Build(s) on CVMFS
-      if: inputs.delete_image_tags == ''
+      if: inputs.delete_image_nametags == ''
       run: |
         # step: Request Build(s) on CVMFS
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         # update and commit for each tag
-        for IMAGE in "${{ inputs.docker_tags }}"; do
+        for IMAGE in "${{ inputs.build_images }}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_build.py \
@@ -101,13 +116,13 @@ runs:
       shell: bash
 
     - name: Request Removal(s) on CVMFS
-      if: inputs.delete_image_tags != ''
+      if: inputs.delete_image_nametags != ''
       run: |
         # step: Request Removal(s) on CVMFS
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         # load into array (w/ trimming)
-        mapfile -t DELETE_IMAGES < <(printf '%s\n' "${{ inputs.delete_image_tags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
+        mapfile -t DELETE_IMAGES < <(printf '%s\n' "${{ inputs.delete_image_nametags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
         
         # request all matches for each tag (pattern)
         for IMAGE in "${DELETE_IMAGES[@]}"; do

@@ -19,7 +19,10 @@ def main() -> None:
         dest="image",  # type is 'ImageParsed'
         required=True,
         type=parse_image_uri,
-        help="The docker image uri w/ name and tag, eg: 'icecube/skymap_scanner:4.0.0', 'ghcr.io/wipacrepo/iceprod:3.0.52', ...",
+        help=(
+            "The docker image uri w/ name and tag, "
+            "eg: 'icecube/skymap_scanner:4.0.0', 'ghcr.io/wipacrepo/iceprod:3.0.52', ..."
+        ),
     )
     parser.add_argument(
         "--dest-dir",
