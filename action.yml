@@ -86,6 +86,7 @@ runs:
       with:
         repository: WIPACrepo/cvmfs-actions
         token: ${{ inputs.github_token }}  # so job can git push
+        path: .cvmfs-actions  # access at $GITHUB_WORKSPACE/.cvmfs-actions
 
     - name: Git config
       run: |
@@ -105,7 +106,7 @@ runs:
         for IMAGE in "${{ inputs.build_images }}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
-          python3 ${{ github.action_path }}/request_build.py \
+          python3 $GITHUB_WORKSPACE/.cvmfs-actions/request_build.py \
               --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
@@ -128,7 +129,7 @@ runs:
         for IMAGE in "${DELETE_IMAGES[@]}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
-          python3 ${{ github.action_path }}/request_removal.py \
+          python3 $GITHUB_WORKSPACE/.cvmfs-actions/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
