@@ -9,7 +9,8 @@ inputs:
     required: true
   build_images:
     description: |
-      The Docker image(s) to be built on CVMFS  
+      BUILD MODE:
+        The Docker image(s) to be built on CVMFS  
         Image format:
           Docker Hub            : icecube/skymap_scanner:4.0.0 
           GH Container Registry : ghcr.io/wipacrepo/iceprod:3.0.52
@@ -17,11 +18,12 @@ inputs:
     default: ''
   delete_image_nametags:
     description: |
-      DELETION MODE: Newline-delimited images (name + tag) to remove, indicated verbatim or using known patterns.
-      Example:
-        delete_image_nametags: |
-          foo:v1.2.3
-          foo:main-[SHA]
+      DELETION MODE: 
+        Newline-delimited images (name + tag) to remove, indicated verbatim or using known patterns.
+        Example:
+          delete_image_nametags: |
+            foo:v1.2.3
+            foo:main-[SHA]
     default: ''
 
 runs:
