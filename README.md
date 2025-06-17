@@ -12,7 +12,7 @@ These inputs are required.
 - uses: WIPACrepo/build-singularity-cvmfs-action@v##
   with:
     github_token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # so job can git push
-    docker_tags: ${{ needs.docker.outputs.tags }}  # or similar
+    build_images: ${{ needs.docker.outputs.tags }}  # or similar
 ```
 
 ### Full Example
