@@ -2,7 +2,7 @@ name: CVMFS Image Management
 
 inputs:
   github_token:
-    description: 'a PAT so the bot can git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push to WIPACrepo/cvmfs-actions'
+    description: 'a PAT so the bot can git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" push to WIPACrepo/cvmfs-actions'
     required: true
   dest_dir:
     description: 'the CVMFS sub-directory to place/remove images'
@@ -29,12 +29,20 @@ inputs:
 runs:
   using: "composite"
   steps:
+
     - name: internal logic (set env vars)
       run: |
         # step: internal logic (set env vars)
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
+
+        WIPACREPO_CVMFS_ACTIONS_DIR_BASENAME=".cvmfs-actions"
+        echo "WIPACREPO_CVMFS_ACTIONS_DIR_BASENAME=$WIPACREPO_CVMFS_ACTIONS_DIR_BASENAME" >> "$GITHUB_ENV"
+
+        WIPACREPO_CVMFS_ACTIONS_DIR="$GITHUB_WORKSPACE/$WIPACREPO_CVMFS_ACTIONS_DIR_BASENAME"
+        echo "WIPACREPO_CVMFS_ACTIONS_DIR=$WIPACREPO_CVMFS_ACTIONS_DIR" >> "$GITHUB_ENV"
         
-        echo "DOCKER_IMAGES_FILE=$GITHUB_WORKSPACE/.cvmfs-actions/docker_images.txt" >> "$GITHUB_ENV"
+        DOCKER_IMAGES_FILE="$WIPACREPO_CVMFS_ACTIONS_DIR/docker_images.txt"
+        echo "DOCKER_IMAGES_FILE=$DOCKER_IMAGES_FILE" >> "$GITHUB_ENV"
 
       shell: bash
 
@@ -86,14 +94,14 @@ runs:
       with:
         repository: WIPACrepo/cvmfs-actions
         token: ${{ inputs.github_token }}  # so job can git push
-        path: .cvmfs-actions
+        path: .cvmfs-actions  # NOTE: this must match 'WIPACREPO_CVMFS_ACTIONS_DIR_BASENAME'
 
     - name: Git config
       run: |
         # step: Git config
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
-        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" config user.name github-actions
-        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" config user.email github-actions@github.com
+        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" config user.name github-actions
+        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" config user.email github-actions@github.com
       shell: bash
 
     - name: Request Build(s) on CVMFS
@@ -110,8 +118,8 @@ runs:
               --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
-          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" add "$DOCKER_IMAGES_FILE" || true
-          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" commit -m "<bot> build: $IMAGE" || true
+          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" add "$DOCKER_IMAGES_FILE" || true
+          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" commit -m "<bot> build: $IMAGE" || true
         done
 
       shell: bash
@@ -133,8 +141,8 @@ runs:
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
-          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" add "$DOCKER_IMAGES_FILE" || true
-          git -C "$GITHUB_WORKSPACE/.cvmfs-actions" commit -m "<bot> remove: $IMAGE" || true
+          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" add "$DOCKER_IMAGES_FILE" || true
+          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" commit -m "<bot> remove: $IMAGE" || true
         done
 
       shell: bash
@@ -144,7 +152,7 @@ runs:
         # step: View changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" diff --unified=0 origin/main...HEAD
+        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" diff --unified=0 origin/main...HEAD
 
       shell: bash
 
@@ -153,13 +161,13 @@ runs:
         # step: Push changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        status=`git -C "$GITHUB_WORKSPACE/.cvmfs-actions" status 2>&1 | tee`
+        status=`git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" status 2>&1 | tee`
         ahead=`echo -n "${status}" | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
         if [ "$ahead" -eq "1" ]; then
           echo "no changes needed"
           exit 0
         fi
-        git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push
+        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" push
         
         echo "::notice::see https://github.com/WIPACrepo/cvmfs-actions/blob/main/$DOCKER_IMAGES_FILE"
 
