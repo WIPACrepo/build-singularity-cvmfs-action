@@ -2,7 +2,7 @@ name: CVMFS Image Management
 
 inputs:
   github_token:
-    description: 'a PAT so the bot can git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" push to WIPACrepo/cvmfs-actions'
+    description: 'a PAT so the bot can git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" push to WIPACrepo/cvmfs-actions'
     required: true
   dest_dir:
     description: 'the CVMFS sub-directory to place/remove images'
@@ -100,8 +100,8 @@ runs:
       run: |
         # step: Git config
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
-        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" config user.name github-actions
-        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" config user.email github-actions@github.com
+        git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" config user.name github-actions
+        git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" config user.email github-actions@github.com
       shell: bash
 
     - name: Request Build(s) on CVMFS
@@ -118,8 +118,8 @@ runs:
               --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
-          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" add "$DOCKER_IMAGES_FILE" || true
-          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" commit -m "<bot> build: $IMAGE" || true
+          git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" add "$DOCKER_IMAGES_FILE" || true
+          git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" commit -m "<bot> build: $IMAGE" || true
         done
 
       shell: bash
@@ -141,8 +141,8 @@ runs:
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
-          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" add "$DOCKER_IMAGES_FILE" || true
-          git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" commit -m "<bot> remove: $IMAGE" || true
+          git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" add "$DOCKER_IMAGES_FILE" || true
+          git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" commit -m "<bot> remove: $IMAGE" || true
         done
 
       shell: bash
@@ -152,7 +152,7 @@ runs:
         # step: View changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" diff --unified=0 origin/main...HEAD
+        git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" diff --unified=0 origin/main...HEAD
 
       shell: bash
 
@@ -161,13 +161,13 @@ runs:
         # step: Push changes
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        status=`git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" status 2>&1 | tee`
+        status=`git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" status 2>&1 | tee`
         ahead=`echo -n "${status}" | grep "Your branch is ahead of" &> /dev/null; echo "$?"`
         if [ "$ahead" -eq "1" ]; then
           echo "no changes needed"
           exit 0
         fi
-        git -C "${{ env.WIPACREPO_CVMFS_ACTIONS_DIR }}" push
+        git -C "$WIPACREPO_CVMFS_ACTIONS_DIR" push
         
         echo "::notice::see https://github.com/WIPACrepo/cvmfs-actions/blob/main/$DOCKER_IMAGES_FILE"
 
