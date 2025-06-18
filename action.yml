@@ -34,7 +34,7 @@ runs:
         # step: internal logic (set env vars)
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        echo "DOCKER_IMAGES_FILE=docker_images.txt" >> "$GITHUB_ENV"
+        echo "DOCKER_IMAGES_FILE=$GITHUB_WORKSPACE/.cvmfs-actions/docker_images.txt" >> "$GITHUB_ENV"
 
       shell: bash
 
@@ -85,8 +85,8 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: WIPACrepo/cvmfs-actions
-        token: ${{ inputs.github_token }}  # so job can git -C "$GITHUB_WORKSPACE/.cvmfs-actions" push
-        path: .cvmfs-actions  # access at $GITHUB_WORKSPACE/.cvmfs-actions
+        token: ${{ inputs.github_token }}  # so job can git push
+        path: .cvmfs-actions
 
     - name: Git config
       run: |
@@ -106,7 +106,7 @@ runs:
         for IMAGE in "${{ inputs.build_images }}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
-          python3 $GITHUB_WORKSPACE/.cvmfs-actions/request_build.py \
+          python3 ${{ github.action_path }}/request_build.py \
               --image-uri "$IMAGE" \
               --dest-dir ${{ inputs.dest_dir }}
           echo "##[endgroup]"
@@ -129,7 +129,7 @@ runs:
         for IMAGE in "${DELETE_IMAGES[@]}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
-          python3 $GITHUB_WORKSPACE/.cvmfs-actions/request_removal.py \
+          python3 ${{ github.action_path }}/request_removal.py \
             --dest-dir "${{ inputs.dest_dir }}" \
             --image-nametag-pattern "$IMAGE"
           echo "##[endgroup]"
