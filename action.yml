@@ -10,11 +10,17 @@ inputs:
   build_images:
     description: |
       BUILD MODE:
-        The Docker image(s) to be built on CVMFS  
+        Newline-delimited Docker image(s) to be built on CVMFS  
         Image format:
-          Docker Hub            : icecube/skymap_scanner:4.0.0 
+          Docker Hub            : [docker.io/]icecube/skymap_scanner:4.0.0 
           GH Container Registry : ghcr.io/wipacrepo/iceprod:3.0.52
-      HINT: use 'needs.docker.outputs.tags' from https://github.com/docker/metadata-action
+        Example:
+          build_images: |
+            foo/bar:1.2.3
+            foo/bar:main
+        Example:
+          build_images: $ {{ needs.get-my-images.outputs.tags }} (no space after $)
+        HINT: use 'tags' output from https://github.com/docker/metadata-action
     default: ''
   delete_image_nametags:
     description: |
@@ -110,8 +116,12 @@ runs:
         # step: Request Build(s) on CVMFS
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
-        # update and commit for each tag
-        for IMAGE in "${{ inputs.build_images }}"; do
+        # load into array (w/ trimming)
+        mapfile -t BUILD_IMAGES < <(printf '%s\n' "${{ inputs.build_images }}" \
+          | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
+        
+        # update and commit for each image
+        for IMAGE in "${BUILD_IMAGES[@]}"; do
           echo "$IMAGE"
           echo "##[group]updating $DOCKER_IMAGES_FILE"
           python3 ${{ github.action_path }}/request_build.py \
@@ -131,7 +141,8 @@ runs:
         set -euo pipefail; echo "now: $(date -u +"%Y-%m-%dT%H:%M:%S.%3N")"
         
         # load into array (w/ trimming)
-        mapfile -t DELETE_IMAGES < <(printf '%s\n' "${{ inputs.delete_image_nametags }}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
+        mapfile -t DELETE_IMAGES < <(printf '%s\n' "${{ inputs.delete_image_nametags }}" \
+          | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d')
         
         # request all matches for each tag (pattern)
         for IMAGE in "${DELETE_IMAGES[@]}"; do

@@ -36,7 +36,11 @@ def main() -> None:
         logging.warning(f"{arg}: {val}")
 
     # assemble line for the docker-images file
-    cvmfs_image_str = f"docker://{args.image.uri} {args.dest_dir / args.image.nametag}"
+    cvmfs_image_str = (
+        # ex: docker://icecube/skymap_scanner:4.1.0 realtime/skymap_scanner:4.1.0
+        f"docker://{args.image.uri.removeprefix('docker.io/')} "
+        f"{args.dest_dir / args.image.nametag}"
+    )
 
     # read
     with open(os.environ["DOCKER_IMAGES_FILE"], "r") as f:
